@@ -1,0 +1,37 @@
+{
+  "name": "chatblast-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baramex/chatblast-api.git"
+  },
+  "author": "baramex",
+  "license": "SEE LICENSE IN LICENSE FILE",
+  "bugs": {
+    "url": "https://github.com/baramex/chatblast-api/issues"
+  },
+  "homepage": "https://github.com/baramex/chatblast-api#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "bcrypt": "^5.0.1",
+    "body-parser": "^1.20.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-fingerprint": "^1.2.2",
+    "express-rate-limit": "^6.6.0",
+    "mmmagic": "^0.5.3",
+    "mongoose": "^6.4.0",
+    "multer": "^1.4.5-lts.1",
+    "random-web-token": "^1.6.0",
+    "request-ip": "^2.2.0",
+    "socket.io": "^4.5.1",
+    "validator": "^13.7.0"
+  }
+}
