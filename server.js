@@ -66,4 +66,11 @@ server.listen(PORT, () => {
     console.log("Serveur lancé sur le port: " + PORT);
 });
 
+/* api/autre */
+require("dotenv").config();
+const mongoose = require("mongoose");
+mongoose.connect(process.env.DB, { dbName: process.env.DB_NAME });
+
+app.use(require("./api/authentification"), require("./api/profile"), require("./api/message"), require("./api/integration"));
+
 module.exports = { io, app, upload };
