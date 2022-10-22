@@ -1,8 +1,9 @@
+const { ObjectId } = require("mongodb");
 const { Integration } = require("../models/integration.model");
 
 const router = require("express").Router();
 
-router.get("/api/integration/:id", async (req, res) => {
+router.get("/integration/:id", async (req, res) => {
     try {
         const id = req.params.id;
         if (!ObjectId.isValid(id)) throw new Error("Requête invalide.");

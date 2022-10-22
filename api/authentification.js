@@ -11,7 +11,7 @@ const { default: isEmail } = require("validator/lib/isEmail");
 const router = require("express").Router();
 
 // integration auth
-router.post("/api/integration/:int_id/profile/oauth", rateLimit({
+router.post("/integration/:int_id/profile/oauth", rateLimit({
     windowMs: 1000 * 60 * 2,
     max: 5,
     standardHeaders: true,
@@ -93,12 +93,12 @@ router.post("/api/integration/:int_id/profile/oauth", rateLimit({
 });
 
 // example route oauth
-router.get("/api/user/@me", (req, res) => {
+router.get("/user/@me", (req, res) => {
     res.send({ id: "abc123", username: "titout", avatar: "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg" });
 });
 
 // créer profil
-router.post("/api/profile", rateLimit({
+router.post("/profile", rateLimit({
     windowMs: 1000 * 60 * 5,
     max: 5,
     standardHeaders: true,
@@ -127,7 +127,7 @@ router.post("/api/profile", rateLimit({
 });
 
 // déconnexion
-router.post("/api/disconnect", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.post("/disconnect", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         await Session.disable(req.session);
         res.clearCookie((req.integration && req.profile.type !== USERS_TYPE.DEFAULT) ? req.integration._id.toString() + "-token" : "token", { sameSite: "none", secure: "true" }).sendStatus(200);
@@ -138,7 +138,7 @@ router.post("/api/disconnect", Middleware.requiresValidAuthExpress, async (req, 
 });
 
 // connexion
-router.post("/api/login", rateLimit({
+router.post("/login", rateLimit({
     windowMs: 1000 * 60,
     max: 5,
     standardHeaders: true,

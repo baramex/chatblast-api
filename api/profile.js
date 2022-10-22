@@ -4,8 +4,8 @@ const { Profile, USERS_TYPE } = require('../models/profile.model');
 const { Middleware } = require('../models/session.model');
 const path = require('path');
 const fs = require('fs');
-const { io } = require('../server');
-const { disconnected } = require('../socket-io');
+const { disconnected, io } = require('../socket-io');
+const { upload } = require('../server');
 
 const router = require('express').Router();
 
@@ -28,7 +28,7 @@ router.get("/profile/:id/avatar", Middleware.requiresValidAuthExpress, async (re
 });
 
 // utilisateurs en ligne
-router.get("/api/profiles/online", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/profiles/online", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const online = (await io.to("integrationid:" + req.integration?._id.toString()).fetchSockets()).map(a => a.profileId).concat(disconnected.filter(a => (a.intid || req.integration) ? a.intid?.equals(req.integration?._id) : true).map(a => a.id));
         res.status(200).send((await Profile.getUsernamesByIds(online)).map(a => ({ id: a._id, username: a.username })));
@@ -39,7 +39,7 @@ router.get("/api/profiles/online", Middleware.requiresValidAuthExpress, async (r
 });
 
 // récupérer profil
-router.get("/api/profile/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/profile/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
         if (!id || (!ObjectId.isValid(id) && id != "@me")) throw new Error("Requête invalide.");
@@ -54,7 +54,7 @@ router.get("/api/profile/:id", Middleware.requiresValidAuthExpress, async (req, 
 });
 
 // mettre à jour profil
-router.patch("/api/profile/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.patch("/profile/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
         if (id != "@me") throw new Error("Requête invalide.");
@@ -79,7 +79,7 @@ router.patch("/api/profile/:id", Middleware.requiresValidAuthExpress, async (req
 });
 
 // récupérer badges
-router.get("/api/profile/:id/badges", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/profile/:id/badges", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
         if (!id || (!ObjectId.isValid(id) && id != "@me")) throw new Error("Requête invalide.");
@@ -92,7 +92,7 @@ router.get("/api/profile/:id/badges", Middleware.requiresValidAuthExpress, async
 });
 
 // upload avatar
-router.put("/api/profile/@me/avatar", rateLimit({
+router.put("/profile/@me/avatar", rateLimit({
     windowMs: 1000 * 60 * 10,
     max: 5,
     standardHeaders: true,

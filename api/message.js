@@ -7,7 +7,7 @@ const { typing, addTyping, removeTyping } = require('../socket-io');
 const router = require('express').Router();
 
 // poster message
-router.put("/api/message", rateLimit({
+router.put("/message", rateLimit({
     windowMs: 1000 * 5,
     max: 3,
     standardHeaders: true,
@@ -35,7 +35,7 @@ router.put("/api/message", rateLimit({
 });
 
 // récupérer des messages
-router.get("/api/messages", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/messages", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         if (!req.query || !req.query.from) throw new Error("Requête invalide.");
 
@@ -49,7 +49,7 @@ router.get("/api/messages", Middleware.requiresValidAuthExpress, async (req, res
 });
 
 // nombre de message d'un membre
-router.get("/api/profile/:id/messages/count", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/profile/:id/messages/count", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         if (!req.params.id || !ObjectId.isValid(req.params.id)) throw new Error("Requête invalide.");
 
@@ -62,7 +62,7 @@ router.get("/api/profile/:id/messages/count", Middleware.requiresValidAuthExpres
 });
 
 // voir des messages
-router.put("/api/messages/view", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.put("/messages/view", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         if (!req.body || !req.body.ids) throw new Error("Requête invalide.");
 
@@ -83,7 +83,7 @@ router.put("/api/messages/view", Middleware.requiresValidAuthExpress, async (req
 });
 
 // tout voir
-router.put("/api/messages/view/all", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.put("/messages/view/all", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const unreadMessages = await Message.getUnread(req.profile);
 
@@ -100,7 +100,7 @@ router.put("/api/messages/view/all", Middleware.requiresValidAuthExpress, async 
 });
 
 // supprimer un message
-router.delete("/api/message/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.delete("/message/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
         const message = await Message.getById(new ObjectId(id));
@@ -117,7 +117,7 @@ router.delete("/api/message/:id", Middleware.requiresValidAuthExpress, async (re
 });
 
 // écrire
-router.put("/api/typing", Middleware.requiresValidAuthExpress, (req, res) => {
+router.put("/typing", Middleware.requiresValidAuthExpress, (req, res) => {
     try {
         const isTyping = req.body.isTyping ? true : false;
 
@@ -135,7 +135,7 @@ router.put("/api/typing", Middleware.requiresValidAuthExpress, (req, res) => {
 });
 
 // récupérer ceux qui évrivent
-router.get("/api/profiles/typing", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/profiles/typing", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         res.status(200).json(typing.filter(a => a.integrationId?.equals(req.integration?._id)));
     } catch (error) {

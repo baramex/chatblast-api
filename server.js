@@ -24,6 +24,7 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const multer = require("multer");
+const { AVATAR_MIME_TYPE, AVATAR_TYPE } = require("./models/profile.model");
 const upload = multer({
     dest: "./avatars", limits: "0.5mb", fileFilter: async (req, file, callback) => {
         if (!AVATAR_MIME_TYPE.includes(file.mimetype) || !AVATAR_TYPE.includes(path.extname(file.filename))) {
@@ -51,26 +52,11 @@ app.use(Fingerprint({
     ]
 }));
 
-/* serveur/socket.io */
+/* serveur */
 const http = require('http');
 const server = http.createServer(app);
-const { Server } = require("socket.io");
-const { AVATAR_MIME_TYPE, AVATAR_TYPE } = require("./models/profile.model");
-const path = require("path");
-const io = new Server(server, {
-    cors: {
-        origin: process.env.HOST
-    }
-});
 server.listen(PORT, () => {
     console.log("Serveur lancé sur le port: " + PORT);
 });
 
-/* api/autre */
-require("dotenv").config();
-const mongoose = require("mongoose");
-mongoose.connect(process.env.DB, { dbName: process.env.DB_NAME });
-
-app.use(require("./api/authentification"), require("./api/profile"), require("./api/message"), require("./api/integration"));
-
-module.exports = { io, app, upload };
+module.exports = { server, app, upload };
