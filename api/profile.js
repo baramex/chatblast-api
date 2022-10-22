@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { disconnected, io } = require('../socket-io');
 const { upload } = require('../server');
+const Invoice = require('../models/invoice.model');
 
 const router = require('express').Router();
 
@@ -113,6 +114,51 @@ router.put("/profile/@me/avatar", rateLimit({
         console.error(err);
         res.status(400).send(err.message || "Erreur inattendue");
     }
+});
+
+
+
+
+
+// récupérer factures
+router.get("/profile/:id/invoices", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        res.status(200).json(await Invoice.getByProfile(profile._id));
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Erreur inattendue");
+    }
+});
+
+// facture pdf
+router.get("/profile/:id/invoice/:invoiceid/pdf", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        const invoice = await Invoice.getById(req.params.invoiceid);
+        if (!invoice || invoice.profile != profile._id) throw new Error("Facture introuvable.");
+
+
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Erreur inattendue");
+    }
+});
+
+// temp route
+router.get("/invoice/:id/pdf", async (req, res) => {
+    const id = req.params.id;
+
+    const invoice = await Invoice.getById(id);
+    if (!invoice) throw new Error("Facture introuvable.");
+
+    Invoice.exportToPdf(invoice).pipe(res);
 });
 
 module.exports = router;
