@@ -15,6 +15,7 @@ const { Integration, INTEGRATIONS_TYPE, TOKEN_PLACES_TYPE } = require("./models/
 const { default: axios } = require("axios");
 const cookie = require("cookie");
 const { Magic, MAGIC_MIME_TYPE } = require("mmmagic");
+const { default: isEmail } = require("validator/lib/isEmail");
 mongoose.connect(process.env.DB, { dbName: process.env.DB_NAME });
 
 // TEST: cookies through avatar redirection
@@ -175,7 +176,7 @@ app.post("/api/integration/:int_id/profile/oauth", rateLimit({
         }
 
         const expires = new Date(24 * 60 * 60 * 1000 + new Date().getTime());
-        res.cookie(profile.type === USERS_TYPE.DEFAULT ? "token" : req.integration._id.toString() + "-token", session.token, { expires, sameSite: "none", secure: "true" }).json({ id: profile._id, username: profile.username, type: profile.type });
+        res.cookie(profile.type === USERS_TYPE.DEFAULT ? "token" : req.integration._id.toString() + "-token", session.token, { expires, sameSite: "none", secure: "true" }).json(Profile.getProfileFields(profile, true));
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Erreur inattendue");
@@ -206,7 +207,32 @@ app.get("/api/profile/:id", Middleware.requiresValidAuthExpress, async (req, res
 
         const profile = id === "@me" ? req.profile : await Profile.getProfileById(id);
 
-        res.status(200).send({ username: profile.username, id: profile._id, unread: id === "@me" ? await Message.getUnreadCount(req.profile) : undefined, type: req.profile.type, date: profile.date });
+        res.status(200).send(Profile.getProfileFields(profile, id == "@me"));
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Erreur inattendue");
+    }
+});
+
+// mettre à jour profil
+app.patch("/api/profile/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        if (profile.type != USERS_TYPE.DEFAULT) throw new Error("Impossible de modifier cet utilisateur.");
+
+        if (req.body.username) {
+            profile.username = req.body.username;
+        }
+        if (req.body.email) {
+            profile.email.address = req.body.email;
+        }
+
+        await profile.save({ validateBeforeSave: true });
+
+        res.status(200).send(Profile.getProfileFields(profile, true));
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Erreur inattendue");
@@ -258,19 +284,19 @@ app.post("/api/profile", rateLimit({
 }), Middleware.isValidAuthExpress, async (req, res) => {
     try {
         if (req.isAuthed) throw new Error("Vous êtes déjà authentifié.");
-        if (!req.body || !req.body.username || !req.body.password || typeof req.body.username != "string" || typeof req.body.password != "string") throw new Error("Requête invalide.");
+        if (!req.body || !req.body.username || !req.body.password || typeof req.body.username != "string" || typeof req.body.password != "string" || (req.body.email ? typeof req.body.email != "string" : false)) throw new Error("Requête invalide.");
 
-        let { username, password } = req.body;
+        let { username, password, email } = req.body;
         username = username.toLowerCase().trim();
         password = password.trim();
 
-        if (!/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(password) || !FIELD_REGEX.test(username)) throw new Error("Requête invalide.");
+        if (!/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(password) || !FIELD_REGEX.test(username) || !isEmail(email)) throw new Error("Requête invalide.");
 
-        const profile = await Profile.create(username, password, undefined, undefined, USERS_TYPE.DEFAULT);
+        const profile = await Profile.create(username, password, undefined, undefined, USERS_TYPE.DEFAULT, email);
         const ip = getClientIp(req);
         const session = await Session.create(profile._id, req.fingerprint.hash, ip);
         const expires = new Date(24 * 60 * 60 * 1000 + new Date().getTime());
-        res.cookie("token", session.token, { expires, sameSite: "none", secure: "true" }).json({ username: profile.username, id: profile._id, unread: await Message.getUnreadCount(profile), type: profile.type });
+        res.cookie("token", session.token, { expires, sameSite: "none", secure: "true" }).json(Profile.getProfileFields(profile, true));
     }
     catch (error) {
         console.error(error);
@@ -317,7 +343,7 @@ app.post("/api/login", rateLimit({
         }
 
         const expires = new Date(24 * 60 * 60 * 1000 + new Date().getTime());
-        res.cookie((req.integration && profile.type !== USERS_TYPE.DEFAULT) ? req.integration._id.toString() + "-token" : "token", session.token, { expires, sameSite: "none", secure: "true" }).json({ username: profile.username, id: profile._id, unread: await Message.getUnreadCount(profile), type: profile.type });
+        res.cookie((req.integration && profile.type !== USERS_TYPE.DEFAULT) ? req.integration._id.toString() + "-token" : "token", session.token, { expires, sameSite: "none", secure: "true" }).json(Profile.getProfileFields(profile, true));
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Erreur inattendue");
