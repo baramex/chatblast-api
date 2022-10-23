@@ -7,6 +7,7 @@ const fs = require('fs');
 const { disconnected, io } = require('../socket-io');
 const { upload } = require('../server');
 const Invoice = require('../models/invoice.model');
+const { Integration } = require('../models/integration.model');
 
 const router = require('express').Router();
 
@@ -63,10 +64,10 @@ router.patch("/profile/:id", Middleware.requiresValidAuthExpress, async (req, re
         const profile = req.profile;
         if (profile.type != USERS_TYPE.DEFAULT) throw new Error("Impossible de modifier cet utilisateur.");
 
-        if (req.body.username) {
+        if (typeof req.body.username == "string") {
             profile.username = req.body.username;
         }
-        if (req.body.email) {
+        if (typeof req.body.email == "string") {
             profile.email.address = req.body.email;
         }
 
@@ -107,18 +108,12 @@ router.put("/profile/@me/avatar", rateLimit({
 
         fs.renameSync(tempPath, targetPath);
 
-        await req.profile.save();
-
         res.sendStatus(200);
     } catch (err) {
         console.error(err);
         res.status(400).send(err.message || "Erreur inattendue");
     }
 });
-
-
-
-
 
 // récupérer factures
 router.get("/profile/:id/invoices", Middleware.requiresValidAuthExpress, async (req, res) => {
@@ -141,24 +136,98 @@ router.get("/profile/:id/invoice/:invoiceid/pdf", Middleware.requiresValidAuthEx
         if (id != "@me") throw new Error("Requête invalide.");
 
         const profile = req.profile;
-        const invoice = await Invoice.getById(req.params.invoiceid);
-        if (!invoice || invoice.profile != profile._id) throw new Error("Facture introuvable.");
+        const invoice = await Invoice.getById(req.params.invoiceid).populate("profile", "name").populate("articles.article", "name price");
+        if (!invoice || invoice.profile._id != profile._id) throw new Error("Facture introuvable.");
 
-
+        Invoice.exportToPdf(invoice).pipe(res);
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Erreur inattendue");
     }
 });
 
-// temp route
-router.get("/invoice/:id/pdf", async (req, res) => {
-    const id = req.params.id;
+// récupérer intégrations
+router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
 
-    const invoice = await Invoice.getById(id);
-    if (!invoice) throw new Error("Facture introuvable.");
+        const profile = req.profile;
+        const integrations = await Integration.getByOwner(profile._id);
 
-    Invoice.exportToPdf(invoice).pipe(res);
+        res.status(200).json(integrations);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Erreur inattendue");
+    }
+});
+
+// récupérer intégration
+router.get("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        const intid = req.params.intid;
+        const integration = await Integration.getById(intid);
+        if (!integration || integration.owner != profile._id) throw new Error("Intégration introuvable.");
+
+        res.status(200).json(integration);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Erreur inattendue");
+    }
+});
+
+// mettre à jour intégration
+router.patch("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        const intid = req.params.intid;
+        const integration = await Integration.getById(intid);
+        if (!integration || integration.owner != profile._id) throw new Error("Intégration introuvable.");
+
+        if (typeof req.body.name == "string") {
+            integration.name = req.body.name;
+        }
+        if (typeof req.body.state == "number" && req.body.state >= 0 && req.body.state <= 1) {
+            integration.state = req.body.state;
+        }
+        if (typeof req.body.type == "number") {
+            integration.type = req.body.type;
+        }
+        if (typeof req.body.options == "object") {
+            if (typeof req.body.options.domain == "string") {
+                integration.options.domain = req.body.options.domain;
+            }
+            if (typeof req.body.options.verifyAuthToken == "object") {
+                if (typeof req.body.options.verifyAuthToken.route == "string") {
+                    integration.options.verifyAuthToken.route = req.body.options.verifyAuthToken.route;
+                }
+                if (typeof req.body.options.verifyAuthToken.apiKey == "string") {
+                    integration.options.verifyAuthToken.apiKey = req.body.options.verifyAuthToken.apiKey;
+                }
+                if (typeof req.body.options.verifyAuthToken.token == "object") {
+                    if (typeof req.body.options.verifyAuthToken.token.place == "number") {
+                        integration.options.verifyAuthToken.token.place = req.body.options.verifyAuthToken.token.place;
+                    }
+                    if (typeof req.body.options.verifyAuthToken.token.key == "string") {
+                        integration.options.verifyAuthToken.token.key = req.body.options.verifyAuthToken.token.key;
+                    }
+                }
+            }
+        }
+        await integration.save({ validateBeforeSave: true });
+
+        res.status(200).json(integration);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Erreur inattendue");
+    }
 });
 
 module.exports = router;

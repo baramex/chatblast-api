@@ -10,11 +10,19 @@ const USERS_TYPE = {
 };
 const USERNAMES_NOT_ALLOWED = ["system"];
 const FIELD_REGEX = /^[a-z0-9]{1,32}$/;
+const NAME_REGEX = /^[A-Z][a-z]{1,31}$/;
+const LASTNAME_REGEX = /^[A-Z]{1,32}$/;
 const AVATAR_MIME_TYPE = ["image/png", "image/jpeg", "image/jpg"];
 const AVATAR_TYPE = [".png", ".jpeg", ".jpg"];
 
 const profileSchema = new Schema({
     userId: { type: String },
+    name: {
+        type: {
+            firstname: { type: String, required: true, validate: NAME_REGEX },
+            lastname: { type: String, required: true, validate: LASTNAME_REGEX }
+        }
+    },
     email: {
         type: {
             isVerified: { type: Boolean, default: false },
@@ -39,7 +47,7 @@ profileSchema.path("userId").validate(async function (v) {
     return (v && this.isNew) ? !await profileModel.exists({ userId: v }) : true;
 });
 
-profileSchema.path("email.address").validate(async function (v) {   
+profileSchema.path("email.address").validate(async function (v) {
     const parent = this.parent();
     return v ? !await profileModel.exists({ "email.address": v, _id: { $ne: parent._id } }) && parent.type == USERS_TYPE.DEFAULT : true;
 });
@@ -55,9 +63,9 @@ profileSchema.post("validate", function (doc, next) {
 const profileModel = model("Profile", profileSchema, "profiles");
 
 class Profile {
-    static create(username, password, id, integrationId, type, email) {
+    static create(username, password, id, integrationId, type, email, firstname, lastname) {
         return new Promise(async (res, rej) => {
-            new profileModel({ username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, "email.address": email }).save().then(res).catch((error) => {
+            new profileModel({ username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, "email.address": email, name: { firstname, lastname } }).save().then(res).catch((error) => {
                 if (error.code == 11000 && error.keyPattern.username) rej(new Error("Un compte est déjà asssocié à ce nom d'utilisateur."));
                 else rej(error);
             });

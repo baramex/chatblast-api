@@ -20,10 +20,10 @@ const invoiceSchema = new Schema({
     profile: { type: ObjectId, ref: "Profile", required: true },
     articles: {
         type: [{
-            name: { type: String, required: true },
+            article: { type: ObjectId, ref: "Article", required: true },
             quantity: { type: Number, min: 1, default: 1, required: true },
-            price: { type: Number, min: 0, required: true },
             discount: { type: Number, min: 0, max: 100, default: 0, required: true },
+            _id: false
         }],
         required: true
     },
@@ -69,12 +69,15 @@ class Invoice {
         assembleTexts(doc, 60, 95, { text: "Référence la de facture: " }, { text: invoice._id.toString(), font: "Helvetica-Bold" });
         assembleTexts(doc, 60, 115, { text: "État de la facture: " }, { ...InvoiceTypesNames[invoice.state], font: "Helvetica-Bold" });
         assembleTexts(doc, 60, 135, { text: "Date: " }, { text: invoice.date.toLocaleDateString("fr-FR"), font: "Helvetica-Bold" });
-        assembleTexts(doc, 60, 155, { text: "Identifiant client: " }, { text: invoice.profile, font: "Helvetica-Bold" });
+        assembleTexts(doc, 60, 155, { text: "Identifiant client: " }, { text: invoice.profile._id, font: "Helvetica-Bold" });
 
-        const totalHT = invoice.articles.reduce((acc, article) => acc + article.quantity * article.price * (1 - article.discount / 100), 0);
+        const fullName = invoice.profile.name.firstname + " " + invoice.profile.name.lastname;
+        doc.font("Helvetica-Bold", 12).fillColor("#033B1E").text(fullName, doc.page.width - 60 - doc.widthOfString(fullName), 155, { lineBreak: false });
+
+        const totalHT = invoice.articles.reduce((acc, article) => acc + article.quantity * article.article.price * (1 - article.discount / 100), 0);
         const VAT = invoice.vat * totalHT / 100;
         const totalTTC = totalHT + VAT;
-        table(doc, 50, 195, doc.page.width - 100, ["Nom", "Quantité", "Prix unitaire", "Remise", "Prix total HT"], invoice.articles.map(article => [article.name, article.quantity, article.price.toFixed(2) + " " + invoice.currency, (article.discount / 100 * -article.price * article.quantity).toFixed(2) + " " + invoice.currency, (article.quantity * article.price * (1 - article.discount / 100)).toFixed(2) + " " + invoice.currency]), ["", "", "", "Sous total", totalHT.toFixed(2) + " " + invoice.currency]);
+        table(doc, 50, 195, doc.page.width - 100, ["Nom", "Quantité", "Prix unitaire", "Remise", "Prix total HT"], invoice.articles.map(article => [article.article.name, article.quantity, article.article.price.toFixed(2) + " " + invoice.currency, (article.discount / 100 * -article.article.price * article.quantity).toFixed(2) + " " + invoice.currency, (article.quantity * article.article.price * (1 - article.discount / 100)).toFixed(2) + " " + invoice.currency]), ["", "", "", "Sous total", totalHT.toFixed(2) + " " + invoice.currency]);
 
         table(doc, 50, 195 + 30 * (invoice.articles.length + 2) + 20, doc.page.width - 100, ["Total HT", "TVA (" + invoice.vat + "%)", "Total TTC"], [[totalHT, VAT, totalTTC].map(value => value.toFixed(2) + " " + invoice.currency)]);
 
