@@ -9,6 +9,13 @@ const INVOICES_TYPE = {
     REFUNDED: 3
 };
 
+const InvoiceTypesNames = [
+    { text: "En cours de traitement", color: "#cc6600" },
+    { text: "Payée", color: "#05BB2A" },
+    { text: "Erreur", color: "#BB0505" },
+    { text: "Remboursée", color: "#0000ff" }
+]
+
 const invoiceSchema = new Schema({
     profile: { type: ObjectId, ref: "Profile", required: true },
     articles: {
@@ -60,13 +67,17 @@ class Invoice {
         doc.rect(50, 85, doc.page.width - 100, 90).fill("#d1fae5");
 
         assembleTexts(doc, 60, 95, { text: "Référence la de facture: " }, { text: invoice._id.toString(), font: "Helvetica-Bold" });
-        assembleTexts(doc, 60, 115, { text: "État de la facture: " }, { text: Object.keys(INVOICES_TYPE)[invoice.state].toLowerCase(), font: "Helvetica-Bold" });
+        assembleTexts(doc, 60, 115, { text: "État de la facture: " }, { ...InvoiceTypesNames[invoice.state], font: "Helvetica-Bold" });
         assembleTexts(doc, 60, 135, { text: "Date: " }, { text: invoice.date.toLocaleDateString("fr-FR"), font: "Helvetica-Bold" });
         assembleTexts(doc, 60, 155, { text: "Identifiant client: " }, { text: invoice.profile, font: "Helvetica-Bold" });
 
-        table(doc, 50, 195, doc.page.width - 100, ["Nom", "Quantité", "Prix unitaire", "Remise", "Prix total HT"], invoice.articles.map(article => [article.name, article.quantity, article.price.toFixed(2) + " " + invoice.currency, article.discount + " %", (article.quantity * article.price * (1 - article.discount / 100)).toFixed(2) + " " + invoice.currency]));
+        const totalHT = invoice.articles.reduce((acc, article) => acc + article.quantity * article.price * (1 - article.discount / 100), 0);
+        const VAT = invoice.vat * totalHT / 100;
+        const totalTTC = totalHT + VAT;
+        table(doc, 50, 195, doc.page.width - 100, ["Nom", "Quantité", "Prix unitaire", "Remise", "Prix total HT"], invoice.articles.map(article => [article.name, article.quantity, article.price.toFixed(2) + " " + invoice.currency, (article.discount / 100 * -article.price * article.quantity).toFixed(2) + " " + invoice.currency, (article.quantity * article.price * (1 - article.discount / 100)).toFixed(2) + " " + invoice.currency]), ["", "", "", "Sous total", totalHT.toFixed(2) + " " + invoice.currency]);
 
-        doc.line
+        table(doc, 50, 195 + 30 * (invoice.articles.length + 2) + 20, doc.page.width - 100, ["Total HT", "TVA (" + invoice.vat + "%)", "Total TTC"], [[totalHT, VAT, totalTTC].map(value => value.toFixed(2) + " " + invoice.currency)]);
+
         doc.end();
         return doc;
     }
@@ -80,19 +91,28 @@ function assembleTexts(doc, x, y, ...texts) {
     });
 }
 
-function table(doc, x, y, w, header, entries) {
+function table(doc, x, y, w, header, entries, footer) {
     doc.rect(x, y, w, 30).fill("#a7f3d0");
     header.forEach((h, i) => {
-        doc.font("Helvetica-Bold", 12).fillColor("#033B1E").text(h, x + (i * w / header.length), y + 15, { width: w / header.length, align: "center", baseline: "middle" });
+        if (h) doc.font("Helvetica-Bold", 12).fillColor("#033B1E").text(h, x + (i * w / header.length), y + 15, { width: w / header.length, align: "center", baseline: "middle" });
     });
 
     doc.rect(x, y + 30, w, 30 * entries.length).fill("#d1fae5");
     entries.forEach((e, i) => {
         e.forEach((t, j) => {
-            doc.font("Helvetica", 12).fillColor("#033B1E").text(t, x + (j * w / e.length), y + 30 + 15 + (i * 30), { width: w / e.length, align: "center", baseline: "middle" });
+            if (t) doc.font("Helvetica", 12).fillColor("#033B1E").text(t, x + (j * w / e.length), y + 30 + 15 + (i * 30), { width: w / e.length, align: "center", baseline: "middle" });
         });
         doc.lineCap("butt").moveTo(x, y + 30 * (i + 1)).lineTo(x + w, y + 30 * (i + 1)).stroke("#033B1E");
     });
+
+    if (footer) {
+        doc.rect(x, y + 30 * (entries.length + 1), w, 30).fill("#a7f3d0");
+        doc.lineCap("butt").moveTo(x, y + 30 * (entries.length + 1)).lineTo(x + w, y + 30 * (entries.length + 1)).stroke("#033B1E");
+
+        footer.forEach((f, i) => {
+            if (f) doc.font("Helvetica-Bold", 12).fillColor("#033B1E").text(f, x + (i * w / footer.length), y + 30 * (entries.length + 1) + 15, { width: w / footer.length, align: "center", baseline: "middle" });
+        });
+    }
 }
 
 module.exports = Invoice;
