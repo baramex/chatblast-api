@@ -1,5 +1,5 @@
 const { Schema, model, default: mongoose } = require("mongoose");
-const { io } = require("../server");
+const { io } = require("../socket-io");
 const { ObjectId } = mongoose.Types;
 
 const messageSchema = new Schema({

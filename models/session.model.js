@@ -1,6 +1,6 @@
 const { Schema, model, default: mongoose } = require("mongoose");
 const token = require("random-web-token");
-const { io } = require("../server");
+const { io } = require("../socket-io");
 const { Integration, INTEGRATIONS_TYPE } = require("./integration.model");
 const { Profile, USERS_TYPE } = require("./profile.model");
 const { ObjectId } = mongoose.Types;

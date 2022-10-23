@@ -4,4 +4,7 @@ const mongoose = require("mongoose");
 const { app } = require("./server");
 mongoose.connect(process.env.DB, { dbName: process.env.DB_NAME });
 
+require("./models/article.model");
+require("./models/subscription.model");
+
 app.use(require("./api/authentification"), require("./api/profile"), require("./api/message"), require("./api/integration"));
