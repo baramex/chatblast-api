@@ -1,14 +1,7 @@
 const { Profile } = require("./models/profile.model");
 const { Session, Middleware } = require("./models/session.model");
 const cookie = require("cookie");
-
-const { Server } = require("socket.io");
-const { server } = require("./server");
-const io = new Server(server, {
-    cors: {
-        origin: process.env.HOST
-    }
-});
+const { io } = require("./server");
 
 let typing = [];
 let disconnected = [];
@@ -72,4 +65,4 @@ function removeTyping(profile, integrationId) {
     }
 }
 
-module.exports = { typing, disconnected, addTyping, removeTyping, io };
+module.exports = { typing, disconnected, addTyping, removeTyping };

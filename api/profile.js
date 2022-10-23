@@ -4,8 +4,8 @@ const { Profile, USERS_TYPE } = require('../models/profile.model');
 const { Middleware } = require('../models/session.model');
 const path = require('path');
 const fs = require('fs');
-const { disconnected, io } = require('../socket-io');
-const { upload } = require('../server');
+const { disconnected } = require('../socket-io');
+const { upload, io } = require('../server');
 const Invoice = require('../models/invoice.model');
 const { Integration } = require('../models/integration.model');
 
