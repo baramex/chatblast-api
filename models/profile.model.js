@@ -8,6 +8,17 @@ const USERS_TYPE = {
     ANONYME: 1,
     OAUTHED: 2
 };
+const USER_PERMISSIONS = {
+    ALL: 0,
+    VIEW_USER_INTEGRATIONS: 1,
+    VIEW_USER_INVOICES: 2,
+    VIEW_USER_SUBSCRIPTIONS: 3,
+    VIEW_CONTACTS: 4,
+    VIEW_USER_SUPPORTS: 5,
+    DELETE_OTHER_MESSAGES: 6,
+    ANSWER_CONTACTS: 7,
+    ANSWER_USER_SUPPORTS: 8
+}
 const USERNAMES_NOT_ALLOWED = ["system"];
 const FIELD_REGEX = /^[a-z0-9]{1,32}$/;
 const NAME_REGEX = /^[A-Z][a-z]{1,31}$/;
@@ -33,6 +44,7 @@ const profileSchema = new Schema({
     },
     username: { type: String, lowercase: true, trim: true, required: true, validate: FIELD_REGEX },
     password: { type: String, trim: true },
+    permissions: { type: [{ type: Number, min: 0, max: Object.values(USER_PERMISSIONS).length }], default: [] },
     integrationId: { type: Types.ObjectId },
     integrations: { type: [Types.ObjectId], default: [] },
     type: { type: Number, default: USERS_TYPE.DEFAULT, min: 0, max: Object.values(USERS_TYPE).length - 1 },
@@ -70,6 +82,10 @@ class Profile {
                 else rej(error);
             });
         });
+    }
+
+    static hasPermission(profile, ...permissions) {
+        return permissions.every(p => profile.permissions.includes(p)) || profile.permissions.includes(USER_PERMISSIONS.ALL);
     }
 
     static usernameExists(type, username, integrationId, id = false) {
@@ -130,10 +146,11 @@ class Profile {
                 isVerified: profile.email.isVerified,
                 address: profile.email.address
             } : undefined,
+            permissions: profile.permissions,
             type: profile.type,
             date: profile.date
         };
     }
 }
 
-module.exports = { Profile, USERS_TYPE, FIELD_REGEX, AVATAR_MIME_TYPE, AVATAR_TYPE };
+module.exports = { Profile, USERS_TYPE, FIELD_REGEX, AVATAR_MIME_TYPE, AVATAR_TYPE, USER_PERMISSIONS };

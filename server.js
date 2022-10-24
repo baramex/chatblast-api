@@ -90,4 +90,12 @@ const footer = `
 </div>
 `;
 
-module.exports = { server, app, upload, io, header, footer, mail };
+/* autre */
+class CustomError extends Error {
+    constructor(message, status) {
+        super(message);
+        this.status = status;
+    }
+}
+
+module.exports = { server, app, upload, io, header, footer, mail, CustomError };
