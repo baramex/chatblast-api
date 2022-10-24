@@ -37,7 +37,7 @@ const profileSchema = new Schema({
     email: {
         type: {
             isVerified: { type: Boolean, default: false },
-            address: { type: String, trim: true, lowercase: true, validate: isEmail },
+            address: { type: String, trim: true, lowercase: true, required: true, validate: isEmail },
             verificationCode: { type: String },
             _id: false
         }
@@ -65,7 +65,7 @@ profileSchema.path("email.address").validate(async function (v) {
 });
 
 profileSchema.post("validate", function (doc, next) {
-    if (this.isModified("email.address")) {
+    if (this.isModified("email.address") && this.email) {
         this.email.isVerified = false;
         this.email.verificationCode = undefined;
     }
@@ -77,11 +77,17 @@ const profileModel = model("Profile", profileSchema, "profiles");
 class Profile {
     static create(username, password, id, integrationId, type, email, firstname, lastname) {
         return new Promise(async (res, rej) => {
-            new profileModel({ username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, "email.address": email, name: { firstname, lastname } }).save().then(res).catch((error) => {
+            new profileModel({
+                username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, ...(email ? { email: { address: email } } : {}), ...((firstname && lastname) ? { name: { firstname, lastname } } : {})
+            }).save().then(res).catch((error) => {
                 if (error.code == 11000 && error.keyPattern.username) rej(new Error("Un compte est déjà asssocié à ce nom d'utilisateur."));
                 else rej(error);
             });
         });
+    }
+
+    static isComplete(profile) {
+        return profile.email && profile.email.isVerified && profile.name && profile.name.firstname && profile.name.lastname;
     }
 
     static hasPermission(profile, ...permissions) {
