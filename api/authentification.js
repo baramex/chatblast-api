@@ -88,7 +88,7 @@ router.post("/integration/:int_id/profile/oauth", rateLimit({
         res.cookie(profile.type === USERS_TYPE.DEFAULT ? "token" : req.integration._id.toString() + "-token", session.token, { expires, sameSite: "none", secure: "true" }).json(Profile.getProfileFields(profile, true));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -122,7 +122,7 @@ router.post("/profile", rateLimit({
     }
     catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -133,7 +133,7 @@ router.post("/disconnect", Middleware.requiresValidAuthExpress, async (req, res)
         res.clearCookie((req.integration && req.profile.type !== USERS_TYPE.DEFAULT) ? req.integration._id.toString() + "-token" : "token", { sameSite: "none", secure: "true" }).sendStatus(200);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -168,7 +168,7 @@ router.post("/login", rateLimit({
         res.cookie((req.integration && profile.type !== USERS_TYPE.DEFAULT) ? req.integration._id.toString() + "-token" : "token", session.token, { expires, sameSite: "none", secure: "true" }).json(Profile.getProfileFields(profile, true));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 

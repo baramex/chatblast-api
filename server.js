@@ -1,5 +1,5 @@
 /* constantes */
-const PORT = 6000;
+const PORT = 5000;
 
 /* express */
 const express = require("express");

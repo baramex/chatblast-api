@@ -20,7 +20,7 @@ router.post("/article/:id/buy", Middleware.requiresValidAuthExpress, async (req,
         res.status(200).json({ href: subscription.links.find(a => a.rel == "approve").href });
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 

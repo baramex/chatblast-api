@@ -25,7 +25,7 @@ router.get("/profile/:id/avatar", Middleware.requiresValidAuthExpress, async (re
         res.sendFile(path.join(__dirname, "avatars", name));
     } catch (err) {
         console.error(err);
-        res.status(400).send(err.message || "Erreur inattendue");
+        res.status(400).send(err.message || "Une erreur est survenue.");
     }
 });
 
@@ -36,7 +36,7 @@ router.get("/profiles/online", Middleware.requiresValidAuthExpress, async (req, 
         res.status(200).send((await Profile.getUsernamesByIds(online)).map(a => ({ id: a._id, username: a.username })));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -51,7 +51,7 @@ router.get("/profile/:id", Middleware.requiresValidAuthExpress, async (req, res)
         res.status(200).send(Profile.getProfileFields(profile, id == "@me"));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -67,8 +67,17 @@ router.patch("/profile/:id", Middleware.requiresValidAuthExpress, async (req, re
         if (typeof req.body.username == "string") {
             profile.username = req.body.username;
         }
-        if (typeof req.body.email == "string") {
-            profile.email.address = req.body.email;
+        if (typeof req.body.email?.address == "string") {
+            if(!profile.email) profile.email = {};
+            profile.email.address = req.body.email.address;
+        }
+        if (typeof req.body.name?.firstname == "string") {
+            if(!profile.name) profile.name = {};
+            profile.name.firstname = req.body.name.firstname;
+        }
+        if (typeof req.body.name?.lastname == "string") {
+            if(!profile.name) profile.name = {};
+            profile.name.lastname = req.body.name.lastname;
         }
 
         await profile.save({ validateBeforeSave: true });
@@ -76,7 +85,7 @@ router.patch("/profile/:id", Middleware.requiresValidAuthExpress, async (req, re
         res.status(200).send(Profile.getProfileFields(profile, true));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -89,7 +98,7 @@ router.get("/profile/:id/badges", Middleware.requiresValidAuthExpress, async (re
         res.status(200).send(await Profile.getBadges(id === "@me" ? req.profile : await Profile.getProfileById(id), req.integration));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -111,7 +120,7 @@ router.put("/profile/@me/avatar", rateLimit({
         res.sendStatus(200);
     } catch (err) {
         console.error(err);
-        res.status(400).send(err.message || "Erreur inattendue");
+        res.status(400).send(err.message || "Une erreur est survenue.");
     }
 });
 
@@ -125,7 +134,7 @@ router.get("/profile/:id/invoices", Middleware.requiresValidAuthExpress, async (
         res.status(200).json(await Invoice.getByProfile(profile._id));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -142,7 +151,7 @@ router.get("/profile/:id/invoice/:invoiceid/pdf", Middleware.requiresValidAuthEx
         Invoice.exportToPdf(invoice).pipe(res);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -158,7 +167,7 @@ router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, asy
         res.status(200).json(integrations);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -176,7 +185,7 @@ router.get("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpres
         res.status(200).json(integration);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -226,7 +235,7 @@ router.patch("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpr
         res.status(200).json(integration);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 

@@ -30,7 +30,7 @@ router.put("/message", rateLimit({
         res.sendStatus(201);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -44,7 +44,7 @@ router.get("/messages", Middleware.requiresValidAuthExpress, async (req, res) =>
         res.status(200).json(mes);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -57,7 +57,7 @@ router.get("/profile/:id/messages/count", Middleware.requiresValidAuthExpress, a
         res.status(200).json(mes);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -78,7 +78,7 @@ router.put("/messages/view", Middleware.requiresValidAuthExpress, async (req, re
         res.sendStatus(201);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -95,7 +95,7 @@ router.put("/messages/view/all", Middleware.requiresValidAuthExpress, async (req
     }
     catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -112,7 +112,7 @@ router.delete("/message/:id", Middleware.requiresValidAuthExpress, async (req, r
         res.sendStatus(200);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -130,7 +130,7 @@ router.put("/typing", Middleware.requiresValidAuthExpress, (req, res) => {
         res.sendStatus(201);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -140,7 +140,7 @@ router.get("/profiles/typing", Middleware.requiresValidAuthExpress, async (req, 
         res.status(200).json(typing.filter(a => a.integrationId?.equals(req.integration?._id)));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 

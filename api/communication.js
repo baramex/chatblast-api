@@ -45,7 +45,7 @@ router.post("/contact", rateLimit({
         res.sendStatus(200);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -58,7 +58,7 @@ router.get("/contacts", Middleware.requiresValidAuthExpress, async (req, res) =>
         res.status(200).json(contacts);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -75,7 +75,7 @@ router.get("/contact/:id", Middleware.requiresValidAuthExpress, async (req, res)
         res.status(200).json(contact);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -110,7 +110,7 @@ router.post("/contact/:id/answer", Middleware.requiresValidAuthExpress, async (r
         res.status(200).json(contact);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 

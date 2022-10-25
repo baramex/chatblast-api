@@ -14,7 +14,7 @@ router.get("/integration/:id", async (req, res) => {
         res.json({ id: integration._id, state: integration.state, type: integration.type, cookieName: integration.options.cookieName });
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Erreur inattendue");
+        res.status(400).send(error.message || "Une erreur est survenue.");
     }
 });
 

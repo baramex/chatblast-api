@@ -21,8 +21,8 @@ const USER_PERMISSIONS = {
 }
 const USERNAMES_NOT_ALLOWED = ["system"];
 const FIELD_REGEX = /^[a-z0-9]{1,32}$/;
-const NAME_REGEX = /^[A-Z][a-z]{1,31}$/;
-const LASTNAME_REGEX = /^[A-Z]{1,32}$/;
+const NAME_REGEX = /^[A-ZÀ-ÿ][a-zà-ÿ]{1,31}$/;
+const LASTNAME_REGEX = /^[A-Zà-ÿ]{1,32}$/;
 const AVATAR_MIME_TYPE = ["image/png", "image/jpeg", "image/jpg"];
 const AVATAR_TYPE = [".png", ".jpeg", ".jpg"];
 
@@ -31,7 +31,8 @@ const profileSchema = new Schema({
     name: {
         type: {
             firstname: { type: String, required: true, validate: NAME_REGEX },
-            lastname: { type: String, required: true, validate: LASTNAME_REGEX }
+            lastname: { type: String, required: true, validate: LASTNAME_REGEX },
+            _id: false
         }
     },
     email: {
@@ -149,9 +150,10 @@ class Profile {
             id: profile._id,
             username: profile.username,
             email: isMe ? {
-                isVerified: profile.email.isVerified,
-                address: profile.email.address
+                isVerified: profile.email?.isVerified,
+                address: profile.email?.address
             } : undefined,
+            name: isMe ? profile.name : undefined,
             permissions: profile.permissions,
             type: profile.type,
             date: profile.date
