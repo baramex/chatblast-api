@@ -1,5 +1,5 @@
 /* constantes */
-const PORT = 1500;
+const PORT = 6000;
 
 /* express */
 const express = require("express");
@@ -99,6 +99,6 @@ class CustomError extends Error {
     }
 }
 const paypal = new Paypal(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
-paypal.connect();
+paypal.connect().catch(console.error);
 
 module.exports = { server, app, upload, io, header, footer, mail, CustomError, paypal };

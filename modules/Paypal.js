@@ -2,8 +2,8 @@ const { default: axios } = require("axios");
 
 const URL = "https://api-m.sandbox.paypal.com/";
 const VERSIONS = {
-    v1: "v1/",
-    v2: "v2/"
+    v1: "v1",
+    v2: "v2"
 }
 
 class Paypal {
@@ -21,7 +21,7 @@ class Paypal {
     }
 
     async connect() {
-        const auth = await axios.post(`${URL}/oauth2/token`, "grant_type=client_credentials", { auth: { username: this.client_id, password: this.client_secret }, headers: { ContentType: "application/x-www-form-urlencoded" } });
+        const auth = await axios.post(`${URL}${VERSIONS.v1}/oauth2/token`, "grant_type=client_credentials", { auth: { username: this.client_id, password: this.client_secret }, headers: { "content-type": "application/x-www-form-urlencoded" } });
 
         this.access_token = auth.data.access_token;
         this.token_type = auth.data.token_type;
@@ -38,7 +38,7 @@ class Paypal {
     async authenticatedRequest(method, endpoint, data, config, version = VERSIONS.v1) {
         if (this.isExpired()) await this.connect();
 
-        return axios({ method, url: `${URL}${version}${endpoint}`, data, ...config, headers: { Authorization: this.authorization, ContentType: "application/json", ...(config.headers || {}) } });
+        return axios({ method, url: `${URL}${version}${endpoint}`, data, ...config, headers: { Authorization: this.authorization, "content-type": "application/json", ...(config.headers || {}) } });
     }
 }
 

@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const mongoose = require("mongoose");
 const { app } = require("./server");
 mongoose.connect(process.env.DB, { dbName: process.env.DB_NAME });
