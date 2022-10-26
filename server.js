@@ -11,6 +11,7 @@ app.use(cors({
     origin: process.env.HOST,
     credentials: true
 }));
+app.use(express.static("public"));
 const rateLimit = require('express-rate-limit');
 const baseLimiter = rateLimit({
     windowMs: 1000 * 2,
@@ -19,7 +20,6 @@ const baseLimiter = rateLimit({
     legacyHeaders: false
 });
 app.use(baseLimiter);
-app.use(express.static("public"));
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

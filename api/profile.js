@@ -56,38 +56,44 @@ router.get("/profile/:id", Middleware.requiresValidAuthExpress, async (req, res)
 });
 
 // mettre à jour profil
-router.patch("/profile/:id", Middleware.requiresValidAuthExpress, async (req, res) => {
-    try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
+router.patch("/profile/:id",
+    rateLimit({
+        windowMs: 1000 * 30,
+        max: 10,
+        standardHeaders: true,
+        legacyHeaders: false
+    }), Middleware.requiresValidAuthExpress, async (req, res) => {
+        try {
+            const id = req.params.id;
+            if (id != "@me") throw new Error("Requête invalide.");
 
-        const profile = req.profile;
-        if (profile.type != USERS_TYPE.DEFAULT) throw new Error("Impossible de modifier cet utilisateur.");
+            const profile = req.profile;
+            if (profile.type != USERS_TYPE.DEFAULT) throw new Error("Impossible de modifier cet utilisateur.");
 
-        if (typeof req.body.username == "string") {
-            profile.username = req.body.username;
-        }
-        if (typeof req.body.email?.address == "string") {
-            if(!profile.email) profile.email = {};
-            profile.email.address = req.body.email.address;
-        }
-        if (typeof req.body.name?.firstname == "string") {
-            if(!profile.name) profile.name = {};
-            profile.name.firstname = req.body.name.firstname;
-        }
-        if (typeof req.body.name?.lastname == "string") {
-            if(!profile.name) profile.name = {};
-            profile.name.lastname = req.body.name.lastname;
-        }
+            if (typeof req.body.username == "string") {
+                profile.username = req.body.username;
+            }
+            if (typeof req.body.email?.address == "string") {
+                if (!profile.email) profile.email = {};
+                profile.email.address = req.body.email.address;
+            }
+            if (typeof req.body.name?.firstname == "string") {
+                if (!profile.name) profile.name = {};
+                profile.name.firstname = req.body.name.firstname;
+            }
+            if (typeof req.body.name?.lastname == "string") {
+                if (!profile.name) profile.name = {};
+                profile.name.lastname = req.body.name.lastname;
+            }
 
-        await profile.save({ validateBeforeSave: true });
+            await profile.save({ validateBeforeSave: true });
 
-        res.status(200).send(Profile.getProfileFields(profile, true));
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message || "Une erreur est survenue.");
-    }
-});
+            res.status(200).send(Profile.getProfileFields(profile, true));
+        } catch (error) {
+            console.error(error);
+            res.status(400).send(error.message || "Une erreur est survenue.");
+        }
+    });
 
 // récupérer badges
 router.get("/profile/:id/badges", Middleware.requiresValidAuthExpress, async (req, res) => {
@@ -104,7 +110,7 @@ router.get("/profile/:id/badges", Middleware.requiresValidAuthExpress, async (re
 
 // upload avatar
 router.put("/profile/@me/avatar", rateLimit({
-    windowMs: 1000 * 60 * 10,
+    windowMs: 1000 * 60,
     max: 5,
     standardHeaders: true,
     legacyHeaders: false
@@ -139,6 +145,7 @@ router.get("/profile/:id/invoices", Middleware.requiresValidAuthExpress, async (
 });
 
 // facture pdf
+// TODO: edit route (not /profile/:id) -> payment.js, check perms
 router.get("/profile/:id/invoice/:invoiceid/pdf", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
@@ -172,6 +179,7 @@ router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, asy
 });
 
 // récupérer intégration
+// TODO: edit route (not /profile/:id) -> integration.js, check perms
 router.get("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
@@ -190,53 +198,60 @@ router.get("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpres
 });
 
 // mettre à jour intégration
-router.patch("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
-    try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
+// TODO: edit route (not /profile/:id) -> integration.js, check perms
+router.patch("/profile/:id/integration/:intid",
+    rateLimit({
+        windowMs: 1000 * 30,
+        max: 10,
+        standardHeaders: true,
+        legacyHeaders: false
+    }), Middleware.requiresValidAuthExpress, async (req, res) => {
+        try {
+            const id = req.params.id;
+            if (id != "@me") throw new Error("Requête invalide.");
 
-        const profile = req.profile;
-        const intid = req.params.intid;
-        const integration = await Integration.getById(intid);
-        if (!integration || integration.owner != profile._id) throw new Error("Intégration introuvable.");
+            const profile = req.profile;
+            const intid = req.params.intid;
+            const integration = await Integration.getById(intid);
+            if (!integration || integration.owner != profile._id) throw new Error("Intégration introuvable.");
 
-        if (typeof req.body.name == "string") {
-            integration.name = req.body.name;
-        }
-        if (typeof req.body.state == "number" && req.body.state >= 0 && req.body.state <= 1) {
-            integration.state = req.body.state;
-        }
-        if (typeof req.body.type == "number") {
-            integration.type = req.body.type;
-        }
-        if (typeof req.body.options == "object") {
-            if (typeof req.body.options.domain == "string") {
-                integration.options.domain = req.body.options.domain;
+            if (typeof req.body.name == "string") {
+                integration.name = req.body.name;
             }
-            if (typeof req.body.options.verifyAuthToken == "object") {
-                if (typeof req.body.options.verifyAuthToken.route == "string") {
-                    integration.options.verifyAuthToken.route = req.body.options.verifyAuthToken.route;
+            if (typeof req.body.state == "number" && req.body.state >= 0 && req.body.state <= 1) {
+                integration.state = req.body.state;
+            }
+            if (typeof req.body.type == "number") {
+                integration.type = req.body.type;
+            }
+            if (typeof req.body.options == "object") {
+                if (typeof req.body.options.domain == "string") {
+                    integration.options.domain = req.body.options.domain;
                 }
-                if (typeof req.body.options.verifyAuthToken.apiKey == "string") {
-                    integration.options.verifyAuthToken.apiKey = req.body.options.verifyAuthToken.apiKey;
-                }
-                if (typeof req.body.options.verifyAuthToken.token == "object") {
-                    if (typeof req.body.options.verifyAuthToken.token.place == "number") {
-                        integration.options.verifyAuthToken.token.place = req.body.options.verifyAuthToken.token.place;
+                if (typeof req.body.options.verifyAuthToken == "object") {
+                    if (typeof req.body.options.verifyAuthToken.route == "string") {
+                        integration.options.verifyAuthToken.route = req.body.options.verifyAuthToken.route;
                     }
-                    if (typeof req.body.options.verifyAuthToken.token.key == "string") {
-                        integration.options.verifyAuthToken.token.key = req.body.options.verifyAuthToken.token.key;
+                    if (typeof req.body.options.verifyAuthToken.apiKey == "string") {
+                        integration.options.verifyAuthToken.apiKey = req.body.options.verifyAuthToken.apiKey;
+                    }
+                    if (typeof req.body.options.verifyAuthToken.token == "object") {
+                        if (typeof req.body.options.verifyAuthToken.token.place == "number") {
+                            integration.options.verifyAuthToken.token.place = req.body.options.verifyAuthToken.token.place;
+                        }
+                        if (typeof req.body.options.verifyAuthToken.token.key == "string") {
+                            integration.options.verifyAuthToken.token.key = req.body.options.verifyAuthToken.token.key;
+                        }
                     }
                 }
             }
-        }
-        await integration.save({ validateBeforeSave: true });
+            await integration.save({ validateBeforeSave: true });
 
-        res.status(200).json(integration);
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message || "Une erreur est survenue.");
-    }
-});
+            res.status(200).json(integration);
+        } catch (error) {
+            console.error(error);
+            res.status(400).send(error.message || "Une erreur est survenue.");
+        }
+    });
 
 module.exports = router;

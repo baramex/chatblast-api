@@ -39,7 +39,6 @@ const profileSchema = new Schema({
         type: {
             isVerified: { type: Boolean, default: false },
             address: { type: String, trim: true, lowercase: true, required: true, validate: isEmail },
-            verificationCode: { type: String },
             _id: false
         }
     },
@@ -149,10 +148,7 @@ class Profile {
         return {
             id: profile._id,
             username: profile.username,
-            email: isMe ? {
-                isVerified: profile.email?.isVerified,
-                address: profile.email?.address
-            } : undefined,
+            email: isMe ? profile.email : undefined,
             name: isMe ? profile.name : undefined,
             permissions: profile.permissions,
             type: profile.type,
