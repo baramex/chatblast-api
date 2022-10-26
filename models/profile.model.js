@@ -52,7 +52,8 @@ const profileSchema = new Schema({
 });
 
 profileSchema.path("username").validate(async function (v) {
-    return !(await Profile.usernameExists(this.type, v, this.integrationId, this._id)) && !USERNAMES_NOT_ALLOWED.includes(v);
+    if (!(await Profile.usernameExists(this.type, v, this.integrationId, this._id)) && !USERNAMES_NOT_ALLOWED.includes(v)) return true;
+    throw new Error("Le nom d'utilisateur existe déjà.");
 });
 
 profileSchema.path("userId").validate(async function (v) {
@@ -61,7 +62,8 @@ profileSchema.path("userId").validate(async function (v) {
 
 profileSchema.path("email.address").validate(async function (v) {
     const parent = this.parent();
-    return v ? !await profileModel.exists({ "email.address": v, _id: { $ne: parent._id } }) && parent.type == USERS_TYPE.DEFAULT : true;
+    if (v ? !await profileModel.exists({ "email.address": v, _id: { $ne: parent._id } }) && parent.type == USERS_TYPE.DEFAULT : true) return true;
+    throw new Error("L'adresse email existe déjà.");
 });
 
 profileSchema.post("validate", function (doc, next) {
@@ -79,9 +81,11 @@ class Profile {
         return new Promise(async (res, rej) => {
             new profileModel({
                 username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, ...(email ? { email: { address: email } } : {}), ...((firstname && lastname) ? { name: { firstname, lastname } } : {})
-            }).save().then(res).catch((error) => {
-                if (error.code == 11000 && error.keyPattern.username) rej(new Error("Un compte est déjà asssocié à ce nom d'utilisateur."));
-                else rej(error);
+            }).save().then(res).catch((error) => {  
+                if(error.errors) {
+                    return rej(new Error(Object.values(error.errors)[0].message));
+                }
+                rej(error);
             });
         });
     }
