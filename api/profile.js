@@ -16,13 +16,13 @@ router.get("/profile/:id/avatar", Middleware.requiresValidAuthExpress, async (re
     try {
         const id = req.params.id;
         if (!id || (!ObjectId.isValid(id) && id != "@me" && id != "deleted")) throw new Error("Requête invalide.");
-        if (id == "deleted") return res.sendFile(path.join(__dirname, "avatars", "user.png"));
+        if (id == "deleted") return res.sendFile(path.join(__dirname, "..", "avatars", "user.png"));
 
         const profile = (id == "@me" || id == req.profile._id.toString()) ? req.profile : await Profile.getProfileById(new ObjectId(id));
 
         const name = profile._id.toString() + ".png";
-        if (!name || !fs.existsSync(path.join(__dirname, "avatars", name))) return res.sendFile(path.join(__dirname, "avatars", "user.png"));
-        res.sendFile(path.join(__dirname, "avatars", name));
+        if (!name || !fs.existsSync(path.join(__dirname, "..", "avatars", name))) return res.sendFile(path.join(__dirname, "..", "avatars", "user.png"));
+        res.sendFile(path.join(__dirname, "..", "avatars", name));
     } catch (err) {
         console.error(err);
         res.status(400).send(err.message || "Une erreur est survenue.");
