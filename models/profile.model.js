@@ -20,9 +20,9 @@ const USER_PERMISSIONS = {
     ANSWER_USER_SUPPORTS: 8
 }
 const USERNAMES_NOT_ALLOWED = ["system"];
-const FIELD_REGEX = /^[a-z0-9]{1,32}$/;
+const FIELD_REGEX = /^[a-z0-9]{2,32}$/;
 const NAME_REGEX = /^[A-ZÀ-ÿ][a-zà-ÿ]{1,31}$/;
-const LASTNAME_REGEX = /^[A-Zà-ÿ]{1,32}$/;
+const LASTNAME_REGEX = /^[A-Zà-ÿ]{2,32}$/;
 const AVATAR_MIME_TYPE = ["image/png", "image/jpeg", "image/jpg"];
 const AVATAR_TYPE = [".png", ".jpeg", ".jpg"];
 
@@ -81,8 +81,8 @@ class Profile {
         return new Promise(async (res, rej) => {
             new profileModel({
                 username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, ...(email ? { email: { address: email } } : {}), ...((firstname && lastname) ? { name: { firstname, lastname } } : {})
-            }).save().then(res).catch((error) => {  
-                if(error.errors) {
+            }).save().then(res).catch((error) => {
+                if (error.errors) {
                     return rej(new Error(Object.values(error.errors)[0].message));
                 }
                 rej(error);
