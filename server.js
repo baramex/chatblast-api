@@ -27,18 +27,15 @@ const multer = require("multer");
 const path = require("path");
 const { AVATAR_MIME_TYPE, AVATAR_TYPE } = require("./models/profile.model");
 const upload = multer({
-    dest: "./avatars", limits: "0.5mb", fileFilter: async (req, file, callback) => {
-        if (!AVATAR_MIME_TYPE.includes(file.mimetype) || !AVATAR_TYPE.includes(path.extname(file.filename))) {
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 500_000
+    },
+    fileFilter: async (req, file, callback) => {
+        if (!AVATAR_MIME_TYPE.includes(file.mimetype) || !AVATAR_TYPE.includes(path.extname(file.originalname))) {
             callback(new Error("Type de fichier invalide."), false);
         }
         else {
-            const type = await new Promise((resolve, reject) => {
-                new Magic(MAGIC_MIME_TYPE).detect(image.data, (err, res) => {
-                    if (err) reject(err);
-                    else resolve(res);
-                });
-            });
-            if (type !== file.mimetype) return callback(new Error("Type de fichier invalide."), false);
             callback(false, true);
         }
     }

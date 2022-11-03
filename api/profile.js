@@ -8,6 +8,7 @@ const { disconnected } = require('../socket-io');
 const { upload, io } = require('../server');
 const Invoice = require('../models/invoice.model');
 const { Integration } = require('../models/integration.model');
+const { Magic, MAGIC_MIME_TYPE } = require('mmmagic');
 
 const router = require('express').Router();
 
@@ -118,10 +119,15 @@ router.put("/profile/@me/avatar", rateLimit({
     try {
         if (!req.file) throw new Error("Requête invalide.");
 
-        const tempPath = req.file.path;
-        const targetPath = path.join(__dirname, "avatars", req.profile._id.toString() + ".png");
+        const type = await new Promise((resolve, reject) => {
+            new Magic(MAGIC_MIME_TYPE).detect(req.file.buffer, (err, res) => {
+                if (err) reject(err);
+                else resolve(res);
+            });
+        });
+        if (type !== req.file.mimetype) throw new Error("Type de fichier invalide.");
 
-        fs.renameSync(tempPath, targetPath);
+        fs.writeFileSync(path.join(__dirname, "..", "avatars", req.profile._id.toString() + ".png"), req.file.buffer);
 
         res.sendStatus(200);
     } catch (err) {
