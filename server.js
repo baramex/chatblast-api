@@ -24,6 +24,7 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const multer = require("multer");
+const path = require("path");
 const { AVATAR_MIME_TYPE, AVATAR_TYPE } = require("./models/profile.model");
 const upload = multer({
     dest: "./avatars", limits: "0.5mb", fileFilter: async (req, file, callback) => {
