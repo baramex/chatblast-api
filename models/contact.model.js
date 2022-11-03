@@ -12,7 +12,7 @@ const contactSchema = new Schema({
     message: { type: String, minlength: 1, maxlength: 1000, required: true },
     answer: { type: String, minlength: 1, maxlength: 1000 },
     state: { type: Number, min: 0, max: Object.values(CONTACTS_STATE).length - 1, default: CONTACTS_STATE.PENDING, required: true },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now, required: true }
 });
 
 contactSchema.pre("save", function (next) {

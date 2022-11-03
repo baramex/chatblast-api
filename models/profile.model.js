@@ -44,11 +44,11 @@ const profileSchema = new Schema({
     },
     username: { type: String, lowercase: true, trim: true, required: true, validate: FIELD_REGEX },
     password: { type: String, trim: true },
-    permissions: { type: [{ type: Number, min: 0, max: Object.values(USER_PERMISSIONS).length }], default: [] },
+    permissions: { type: [{ type: Number, min: 0, max: Object.values(USER_PERMISSIONS).length - 1 }], default: [], required: true },
     integrationId: { type: Types.ObjectId },
-    integrations: { type: [Types.ObjectId], default: [] },
-    type: { type: Number, default: USERS_TYPE.DEFAULT, min: 0, max: Object.values(USERS_TYPE).length - 1 },
-    date: { type: Date, default: Date.now }
+    integrations: { type: [Types.ObjectId], default: [], required: true },
+    type: { type: Number, default: USERS_TYPE.DEFAULT, min: 0, max: Object.values(USERS_TYPE).length - 1, required: true },
+    date: { type: Date, default: Date.now, required: true }
 });
 
 profileSchema.path("username").validate(async function (v) {

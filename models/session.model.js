@@ -10,14 +10,14 @@ const session = new Schema({
     profileId: { type: ObjectId, required: true, unique: true },
     ips: { type: [String], required: true },
     fingerprints: { type: [String], required: true },
-    active: { type: Boolean, default: true },
-    date: { type: Date, default: Date.now },
+    active: { type: Boolean, default: true, required: true },
+    date: { type: Date, default: Date.now, required: true },
 });
 
 session.post("validate", async function (doc, next) {
     if (doc.isModified("active") || doc.isNew) {
         if (doc.active) {
-            doc.token = token.generate("extra", 30);
+            doc.token = token.genSync("extra", 30);
             doc.date = new Date();
             doc.markModified("token");
             doc.markModified("date");

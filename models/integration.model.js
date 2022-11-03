@@ -41,7 +41,7 @@ const integrationSchema = new Schema({
     },
     state: { type: Number, min: 0, max: Object.values(INTEGRATION_STATES_TYPE).length - 1, default: INTEGRATION_STATES_TYPE.INACTIVE, required: true },
     type: { type: Number, min: 0, max: Object.values(INTEGRATIONS_TYPE).length - 1, required: true },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now, required: true }
 });
 
 integrationSchema.path("name").validate(async function (v) {

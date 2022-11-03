@@ -30,7 +30,7 @@ const invoiceSchema = new Schema({
     vat: { type: Number, min: 0, max: 100, required: true },
     currency: { type: String, required: true },
     state: { type: Number, min: 0, max: Object.values(INVOICES_TYPE).length - 1, required: true },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now, required: true }
 });
 
 const InvoiceModel = model("Invoice", invoiceSchema, "invoices");

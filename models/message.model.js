@@ -6,10 +6,10 @@ const messageSchema = new Schema({
     author: { type: ObjectId, ref: "Profile", required: true },
     content: { type: String, required: true, validate: /^.{1,512}$/ },
     integrationId: ObjectId,
-    deleted: { type: Boolean, default: false },
-    edits: { type: [{ content: { type: String, required: true }, date: { type: Date, default: new Date() } }], default: [] },
-    views: { type: [ObjectId], default: [] },
-    date: { type: Date, default: Date.now }
+    deleted: { type: Boolean, default: false, required: true },
+    edits: { type: [{ content: { type: String, required: true }, date: { type: Date, default: Date.now, required: true } }], default: [], required: true },
+    views: { type: [ObjectId], default: [], required: true },
+    date: { type: Date, default: Date.now, required: true }
 });
 
 messageSchema.post("updateMany", async function (doc, next) {

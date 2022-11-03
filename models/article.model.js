@@ -13,7 +13,7 @@ const articleSchema = new Schema({
     product: { type: ObjectId, ref: "Article" },
     paypalPlanId: { type: String },
     type: { type: Number, min: 0, max: Object.values(ARTICLES_TYPE).length - 1, required: true },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now, required: true }
 });
 
 const ArticleModel = model("Article", articleSchema, "articles");
