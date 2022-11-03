@@ -1,4 +1,4 @@
-const { default: axios } = require("axios");
+const axios = require("axios");
 const { Magic, MAGIC_MIME_TYPE } = require("mmmagic");
 const { INTEGRATIONS_TYPE, TOKEN_PLACES_TYPE } = require("../models/integration.model");
 const { Profile, USERS_TYPE, FIELD_REGEX, NAME_REGEX, LASTNAME_REGEX } = require("../models/profile.model");

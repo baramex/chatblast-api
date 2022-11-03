@@ -1,4 +1,4 @@
-const { default: axios } = require("axios");
+const axios = require("axios");
 
 const URL = "https://api-m.sandbox.paypal.com/";
 const VERSIONS = {
@@ -22,7 +22,7 @@ class Paypal {
 
     async connect() {
         const auth = await axios.post(`${URL}${VERSIONS.v1}/oauth2/token`, "grant_type=client_credentials", { auth: { username: this.client_id, password: this.client_secret }, headers: { "content-type": "application/x-www-form-urlencoded" } });
-
+        
         this.access_token = auth.data.access_token;
         this.token_type = auth.data.token_type;
         this.expires_in = auth.data.expires_in;
