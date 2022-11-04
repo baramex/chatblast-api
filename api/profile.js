@@ -88,7 +88,7 @@ router.patch("/profile/:id",
                 profile.name.lastname = req.body.name.lastname;
             }
             if (typeof req.body.password == "string") {
-                if (/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(password)) {
+                if (/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(req.body.password)) {
                     profile.password = await hash(req.body.password, 10);
                 }
             }
