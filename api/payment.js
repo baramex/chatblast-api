@@ -2,8 +2,10 @@ const router = require("express").Router();
 
 const { ObjectId } = require("mongodb");
 const Article = require("../models/article.model");
-const { Profile } = require("../models/profile.model");
+const Invoice = require("../models/invoice.model");
+const { Profile, USER_PERMISSIONS } = require("../models/profile.model");
 const { Middleware } = require("../models/session.model");
+const { CustomError } = require("../server");
 
 router.post("/article/:id/buy", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
@@ -21,6 +23,23 @@ router.post("/article/:id/buy", Middleware.requiresValidAuthExpress, async (req,
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");
+    }
+});
+
+// facture pdf
+router.get("/invoice/:invoiceid/pdf", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const invoice = await Invoice.getById(req.params.invoiceid).populate("profile", "name").populate("articles.article", "name price");
+        if (!invoice) throw new Error("Facture introuvable.");
+        if (invoice.profile._id != req.profile._id && !Profile.hasPermission(req.profile, USER_PERMISSIONS.VIEW_USER_INVOICES)) throw new CustomError("Non autorisé.", 403);
+
+        Invoice.exportToPdf(invoice).pipe(res);
+    } catch (error) {
+        console.error(error);
+        res.status(error.status || 400).send(error.message || "Une erreur est survenue.");
     }
 });
 

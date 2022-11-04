@@ -9,6 +9,7 @@ const { upload, io } = require('../server');
 const Invoice = require('../models/invoice.model');
 const { Integration } = require('../models/integration.model');
 const { Magic, MAGIC_MIME_TYPE } = require('mmmagic');
+const { hash } = require('bcrypt');
 
 const router = require('express').Router();
 
@@ -86,7 +87,11 @@ router.patch("/profile/:id",
                 if (!profile.name) profile.name = {};
                 profile.name.lastname = req.body.name.lastname;
             }
-
+            if (typeof req.body.password == "string") {
+                if (/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(password)) {
+                    profile.password = await hash(req.body.password, 10);
+                }
+            }
             await profile.save({ validateBeforeSave: true });
 
             res.status(200).send(Profile.getProfileFields(profile, true));
@@ -150,24 +155,6 @@ router.get("/profile/:id/invoices", Middleware.requiresValidAuthExpress, async (
     }
 });
 
-// facture pdf
-// TODO: edit route (not /profile/:id) -> payment.js, check perms
-router.get("/profile/:id/invoice/:invoiceid/pdf", Middleware.requiresValidAuthExpress, async (req, res) => {
-    try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
-
-        const profile = req.profile;
-        const invoice = await Invoice.getById(req.params.invoiceid).populate("profile", "name").populate("articles.article", "name price");
-        if (!invoice || invoice.profile._id != profile._id) throw new Error("Facture introuvable.");
-
-        Invoice.exportToPdf(invoice).pipe(res);
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message || "Une erreur est survenue.");
-    }
-});
-
 // récupérer intégrations
 router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
@@ -178,81 +165,6 @@ router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, asy
         const integrations = await Integration.getByOwner(profile._id);
 
         res.status(200).json(integrations);
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message || "Une erreur est survenue.");
-    }
-});
-
-// récupérer intégration
-// TODO: edit route (not /profile/:id) -> integration.js, check perms
-router.get("/profile/:id/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
-    try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
-
-        const profile = req.profile;
-        const intid = req.params.intid;
-        const integration = await Integration.getById(intid);
-        if (!integration || integration.owner != profile._id) throw new Error("Intégration introuvable.");
-
-        res.status(200).json(integration);
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message || "Une erreur est survenue.");
-    }
-});
-
-// mettre à jour intégration
-// TODO: edit route (not /profile/:id) -> integration.js, check perms
-router.patch("/profile/:id/integration/:intid", rateLimit({
-    windowMs: 1000 * 30,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false
-}), Middleware.requiresValidAuthExpress, async (req, res) => {
-    try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
-
-        const profile = req.profile;
-        const intid = req.params.intid;
-        const integration = await Integration.getById(intid);
-        if (!integration || integration.owner != profile._id) throw new Error("Intégration introuvable.");
-
-        if (typeof req.body.name == "string") {
-            integration.name = req.body.name;
-        }
-        if (typeof req.body.state == "number" && req.body.state >= 0 && req.body.state <= 1) {
-            integration.state = req.body.state;
-        }
-        if (typeof req.body.type == "number") {
-            integration.type = req.body.type;
-        }
-        if (typeof req.body.options == "object") {
-            if (typeof req.body.options.domain == "string") {
-                integration.options.domain = req.body.options.domain;
-            }
-            if (typeof req.body.options.verifyAuthToken == "object") {
-                if (typeof req.body.options.verifyAuthToken.route == "string") {
-                    integration.options.verifyAuthToken.route = req.body.options.verifyAuthToken.route;
-                }
-                if (typeof req.body.options.verifyAuthToken.apiKey == "string") {
-                    integration.options.verifyAuthToken.apiKey = req.body.options.verifyAuthToken.apiKey;
-                }
-                if (typeof req.body.options.verifyAuthToken.token == "object") {
-                    if (typeof req.body.options.verifyAuthToken.token.place == "number") {
-                        integration.options.verifyAuthToken.token.place = req.body.options.verifyAuthToken.token.place;
-                    }
-                    if (typeof req.body.options.verifyAuthToken.token.key == "string") {
-                        integration.options.verifyAuthToken.token.key = req.body.options.verifyAuthToken.token.key;
-                    }
-                }
-            }
-        }
-        await integration.save({ validateBeforeSave: true });
-
-        res.status(200).json(integration);
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");
