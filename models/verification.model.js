@@ -30,11 +30,13 @@ class Verification {
         return new verificationModel({ ref, type, expires, code }).save();
     }
 
-    static getValideCode(code) {
-        return verificationModel.findOne({ code, expires: { $lt: Date.now() } });
+    static getValideCode(ref, type, code) {
+        return verificationModel.findOne({ ref, type, code, expires: { $gt: Date.now() } });
+    }
+
+    static delete(code) {
+        return verificationModel.deleteOne({ code });
     }
 }
-
-Verification.create("5f9f1b9c1b9c1b9c1b9c1b9c", VERIFICATIONS_TYPE.EMAIL);
 
 module.exports = { Verification, VERIFICATIONS_TYPE };
