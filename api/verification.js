@@ -19,7 +19,7 @@ router.post("/verification/email/send", rateLimit({
         const verif = await Verification.create(req.profile._id, VERIFICATIONS_TYPE.EMAIL);
         const url = process.env.HOST + "/verification/email?code=" + verif.code;
 
-        console.log(getTestMessageUrl(await mail.transporter.sendMail({
+        await mail.transporter.sendMail({
             from: "ChatBlast <noreplay@chatblast.io>",
             to: email,
             subject: "[ChatBlast] Veuillez vérifier votre adresse email",
@@ -28,7 +28,7 @@ router.post("/verification/email/send", rateLimit({
                 `<p style="color: #f5760a;">⚠ Si vous n'êtes pas l'auteur de cette action, de rien faire.</p><br/>
                 <a style="border-radius: 50px;background-color: #059669;border: none;outline: none;color: white;padding: 8px 15px;text-decoration: none;" href="${url}">Vérifier votre adresse email</a>`
                 + footer
-        })));
+        });
 
         res.sendStatus(200);
     } catch (error) {

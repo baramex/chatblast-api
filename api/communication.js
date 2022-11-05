@@ -96,7 +96,7 @@ router.post("/contact/:id/answer", Middleware.requiresValidAuthExpress, async (r
         contact.answer = answer;
         contact.save({ validateBeforeSave: true });
 
-        getTestMessageUrl(await mail.transporter.sendMail({
+        await mail.transporter.sendMail({
             from: "ChatBlast <noreplay@chatblast.io>",
             to: contact.email,
             subject: "[Contact ChatBlast] Vous avez reçu une réponse",
@@ -105,7 +105,7 @@ router.post("/contact/:id/answer", Middleware.requiresValidAuthExpress, async (r
                 `<p>Un membre du staff de ChatBlast vous a répondu:</p>
                 <p style="margin-left: 10px;">${answer}</p>`
                 + footer
-        }));
+        });
 
         res.status(200).json(contact);
     } catch (error) {

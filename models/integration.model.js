@@ -16,6 +16,7 @@ const INTEGRATIONS_TYPE = {
 };
 
 const integrationSchema = new Schema({
+    subscription: { type: Types.ObjectId, ref: "Subscribtion", required: true },
     owner: { type: Types.ObjectId, ref: "Profile", required: true },
     name: { type: String, validate: /^[a-z-0-9]{1,32}$/, default: () => "apps-" + String(Math.floor((Math.random() * 1000))).padStart(3, "0"), required: true },
     options: {
