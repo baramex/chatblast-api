@@ -11,6 +11,7 @@ const articleSchema = new Schema({
     name: { type: String, required: true },
     price: { type: Number, min: 0 },
     product: { type: ObjectId, ref: "Article" },
+    quantity: { type: Number, min: 1, default: 1 },
     paypalPlanId: { type: String },
     type: { type: Number, min: 0, max: Object.values(ARTICLES_TYPE).length - 1, required: true },
     date: { type: Date, default: Date.now, required: true }
@@ -19,8 +20,8 @@ const articleSchema = new Schema({
 const ArticleModel = model("Article", articleSchema, "articles");
 
 class Article {
-    static create(name, type, price, productId) {
-        return new ArticleModel({ name, price, type, productId }).save();
+    static create(name, type, price, quantity, productId) {
+        return new ArticleModel({ name, price, type, quantity, product: productId }).save();
     }
 
     static getById(id) {

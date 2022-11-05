@@ -9,18 +9,36 @@ const SUBSCRIPTIONS_STATE = {
 
 const subscriptionSchema = new Schema({
     profile: { type: ObjectId, ref: "Profile", required: true },
-    article: { type: ObjectId, ref: "Article", required: true },
+    plan: { type: ObjectId, ref: "Article", required: true },
+    paypalSubscriptionId: { type: String, required: true },
     state: { type: Number, min: 0, max: Object.values(SUBSCRIPTIONS_STATE).length - 1, required: true },
     autorenew: { type: Boolean, default: true, required: true },
     expires: { type: Date, required: true },
+    additionalSites: { type: Number, min: 0, default: 0, required: true },
     date: { type: Date, default: Date.now, required: true }
 });
 
 const SubscriptionModel = model("Subscription", subscriptionSchema, "subscriptions");
 
 class Subscription {
-    static create(profileId, articleId, state, autorenew, expires) {
-        return new SubscriptionModel({ profile: profileId, article: articleId, state, autorenew, expires }).save();
+    static create(profileId, planId, state, paypalSubscriptionId, expires, additionalSites, autorenew) {
+        return new SubscriptionModel({ profile: profileId, plan: planId, state, paypalSubscriptionId, additionalSites, autorenew, expires }).save();
+    }
+
+    static getBySubscriber(profileId) {
+        return SubscriptionModel.find({ profile: profileId });
+    }
+
+    static getSubscriptionFields(doc) {
+        return {
+            _id: doc._id,
+            profile: doc.profile,
+            plan: doc.plan,
+            state: doc.state,
+            autorenew: doc.autorenew,
+            expires: doc.expires,
+            date: doc.date
+        }
     }
 }
 

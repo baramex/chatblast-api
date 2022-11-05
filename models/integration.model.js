@@ -16,7 +16,7 @@ const INTEGRATIONS_TYPE = {
 };
 
 const integrationSchema = new Schema({
-    subscription: { type: Types.ObjectId, ref: "Subscribtion", required: true },
+    subscription: { type: Types.ObjectId, ref: "Subscription", required: true },
     owner: { type: Types.ObjectId, ref: "Profile", required: true },
     name: { type: String, validate: /^[a-z-0-9]{1,32}$/, default: () => "apps-" + String(Math.floor((Math.random() * 1000))).padStart(3, "0"), required: true },
     options: {
@@ -61,8 +61,8 @@ integrationSchema.path("options.verifyAuthToken.route").validate(function (v) {
 const IntegrationModel = model("Integration", integrationSchema, "integrations");
 
 class Integration {
-    static create(ownerId, name, type, options) {
-        return new IntegrationModel({ owner: ownerId, name, type, options }).save();
+    static create(ownerId, name, type, options, subscriptionId) {
+        return new IntegrationModel({ owner: ownerId, name, type, options, subscription: subscriptionId }).save();
     }
 
     /**

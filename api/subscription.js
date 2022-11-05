@@ -7,7 +7,7 @@ const { Profile, USER_PERMISSIONS } = require("../models/profile.model");
 const { Middleware } = require("../models/session.model");
 const { CustomError } = require("../server");
 
-router.post("/article/:id/buy", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.post("/subscription/:id/subscribe", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
         if (!ObjectId.isValid(id)) throw new Error("Requête invalide.");

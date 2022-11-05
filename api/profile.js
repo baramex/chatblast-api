@@ -10,6 +10,7 @@ const Invoice = require('../models/invoice.model');
 const { Integration } = require('../models/integration.model');
 const { Magic, MAGIC_MIME_TYPE } = require('mmmagic');
 const { hash } = require('bcrypt');
+const Subscription = require('../models/subscription.model');
 
 const router = require('express').Router();
 
@@ -162,9 +163,31 @@ router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, asy
         if (id != "@me") throw new Error("Requête invalide.");
 
         const profile = req.profile;
-        const integrations = await Integration.getByOwner(profile._id);
+        const integrations = await Integration.getByOwner(profile._id).populate({
+            path: "subscription",
+            select: "plan",
+            populate: {
+                path: "plan",
+                select: "name"
+            }
+        });
 
         res.status(200).json(integrations);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Une erreur est survenue.");
+    }
+});
+
+router.get("/profile/:id/subscriptions", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        const subscriptions = await Subscription.getBySubscriber(profile._id).populate("plan", "name price quantity");
+
+        res.status(200).json(subscriptions);
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");
