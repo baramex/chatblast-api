@@ -29,6 +29,10 @@ class Subscription {
         return SubscriptionModel.find({ profile: profileId });
     }
 
+    static hasSubscriber(profileId) {
+        return SubscriptionModel.exists({ profile: profileId });
+    }
+
     static getSubscriptionFields(doc) {
         return {
             _id: doc._id,

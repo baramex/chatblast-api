@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb");
 const { Schema, model } = require("mongoose");
 const { paypal } = require("../server");
+const Subscription = require("./subscription.model");
 
 const ARTICLES_TYPE = {
     PLAN: 0,
@@ -83,8 +84,29 @@ class Article {
             article.save();
         }
 
+        const firstSub = !await Subscription.hasSubscriber(subscriber._id);
+
         const subscription = await paypal.authenticatedRequest("POST", "/billing/subscriptions", {
             plan_id: article.paypalPlanId,
+            plan: firstSub ? undefined : {
+                billing_cycles: [
+                    {
+                        frequency: {
+                            interval_unit: "MONTH",
+                            interval_count: 1
+                        },
+                        tenure_type: "REGULAR",
+                        sequence: 1,
+                        pricing_scheme: {
+                            fixed_price: {
+                                value: article.price,
+                                currency_code: "EUR"
+                            }
+                        },
+                        total_cycles: 0
+                    }
+                ]
+            },
             application_context: {
                 brand_name: "ChatBlast",
                 cancel_url: `${process.env.API_HOST}/payment/cancel`,
