@@ -2,6 +2,7 @@ const { ObjectId } = require("mongodb");
 const { Schema, model } = require("mongoose");
 const { paypal } = require("../server");
 const Module = require("./module.model");
+const { Profile } = require("./profile.model");
 const Subscription = require("./subscription.model");
 
 const ARTICLES_TYPE = {
@@ -32,7 +33,8 @@ class Article {
     }
 
     static async createSubscription(article, subscriber, modules = [], additionalSites = 0) {
-        if (article.type != ARTICLES_TYPE.PLAN) throw new Error("L'article n'est pas un plan");
+        if (!Profile.isComplete(subscriber)) throw new Error("Votre profil n'est pas complet ou l'email n'est pas vérifiée.");
+        if (article.type != ARTICLES_TYPE.PLAN) throw new Error("L'article n'est pas un plan.");
 
         for (const i in modules) {
             modules[i] = await Module.getById(modules[i]).select("price");
@@ -123,7 +125,7 @@ class Article {
                 user_action: "SUBSCRIBE_NOW"
             },
             subscriber: {
-                email_address: subscriber.email,
+                email_address: subscriber.email.address,
                 name: {
                     given_name: subscriber.name.fistname,
                     surname: subscriber.name.lastname

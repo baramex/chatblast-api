@@ -1,5 +1,6 @@
 const router = require("express").Router();
 
+const { default: rateLimit } = require("express-rate-limit");
 const { ObjectId } = require("mongodb");
 const Article = require("../models/article.model");
 const Invoice = require("../models/invoice.model");
@@ -7,21 +8,24 @@ const { Profile, USER_PERMISSIONS } = require("../models/profile.model");
 const { Middleware } = require("../models/session.model");
 const { CustomError } = require("../server");
 
-router.post("/subscribe", Middleware.requiresValidAuthExpress, async (req, res) => {
+router.post("/subscribe", rateLimit({
+    windowMs: 1000 * 30,
+    max: 2,
+    standardHeaders: true,
+    legacyHeaders: false
+}), Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.body.planId;
         const modules = req.body.modules;
         const additionalSites = req.body.additionalSites;
-        if (!ObjectId.isValid(id) || (modules && (!Array.isArray(modules) || modules.every(a => ObjectId.isValid(a)))) || (additionalSites && (typeof additionalSites !== "number" || additionalSites < 0 || additionalSites > 5))) throw new Error("Requête invalide.");
+        if (!ObjectId.isValid(id) || (modules && (!Array.isArray(modules) || !modules.every(a => ObjectId.isValid(a)))) || (additionalSites && (typeof additionalSites !== "number" || additionalSites < 0 || additionalSites > 5))) throw new Error("Requête invalide.");
 
         const article = await Article.getById(id).populate("product", "name");
         if (!article) throw new Error("Article introuvable.");
 
-        if (!Profile.isComplete(req.profile)) throw new Error("Votre profil n'est pas complet ou l'email n'est pas vérifiée.");
-
         const subscription = await Article.createSubscription(article, req.profile, modules, additionalSites);
 
-        res.status(200).json({ href: subscription.links.find(a => a.rel == "approve").href });
+        res.status(200).json({ approveUrl: subscription.links.find(a => a.rel == "approve").href });
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");
