@@ -15,14 +15,15 @@ const subscriptionSchema = new Schema({
     autorenew: { type: Boolean, default: true, required: true },
     expires: { type: Date, required: true },
     additionalSites: { type: Number, min: 0, default: 0, required: true },
+    modules: { type: ObjectId, ref: "Module", default: [], required: true },
     date: { type: Date, default: Date.now, required: true }
 });
 
 const SubscriptionModel = model("Subscription", subscriptionSchema, "subscriptions");
 
 class Subscription {
-    static create(profileId, planId, state, paypalSubscriptionId, expires, additionalSites, autorenew) {
-        return new SubscriptionModel({ profile: profileId, plan: planId, state, paypalSubscriptionId, additionalSites, autorenew, expires }).save();
+    static create(profileId, planId, state, paypalSubscriptionId, expires, additionalSites, modules, autorenew) {
+        return new SubscriptionModel({ profile: profileId, plan: planId, state, paypalSubscriptionId, additionalSites, modules, autorenew, expires }).save();
     }
 
     static getBySubscriber(profileId) {

@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb");
 const { Schema, model } = require("mongoose");
 const { paypal } = require("../server");
+const Module = require("./module.model");
 const Subscription = require("./subscription.model");
 
 const ARTICLES_TYPE = {
@@ -12,7 +13,8 @@ const articleSchema = new Schema({
     name: { type: String, required: true },
     price: { type: Number, min: 0 },
     product: { type: ObjectId, ref: "Article" },
-    quantity: { type: Number, min: 1, default: 1 },
+    freeTrial: { type: Boolean, default: false, required: true },
+    quantity: { type: Number, min: 1, default: 1, required: true },
     paypalPlanId: { type: String },
     type: { type: Number, min: 0, max: Object.values(ARTICLES_TYPE).length - 1, required: true },
     date: { type: Date, default: Date.now, required: true }
@@ -21,16 +23,21 @@ const articleSchema = new Schema({
 const ArticleModel = model("Article", articleSchema, "articles");
 
 class Article {
-    static create(name, type, price, quantity, productId) {
-        return new ArticleModel({ name, price, type, quantity, product: productId }).save();
+    static create(name, type, price, quantity, freeTrial, productId) {
+        return new ArticleModel({ name, price, type, quantity, freeTrial, product: productId }).save();
     }
 
     static getById(id) {
         return ArticleModel.findById(id);
     }
 
-    static async createSubscription(article, subscriber) {
+    static async createSubscription(article, subscriber, modules = [], additionalSites = 0) {
         if (article.type != ARTICLES_TYPE.PLAN) throw new Error("L'article n'est pas un plan");
+
+        for (const i in modules) {
+            modules[i] = await Module.getById(modules[i]).select("price");
+        }
+        modules = modules.filter(a => a);
 
         if (!article.paypalPlanId) {
             const product = await paypal.authenticatedRequest("POST", "/catalogs/products", {
@@ -47,20 +54,11 @@ class Article {
                 billing_cycles: [
                     {
                         frequency: {
-                            interval_unit: "WEEk",
-                            interval_count: 1
-                        },
-                        tenure_type: "TRIAL",
-                        sequence: 1,
-                        total_cycles: 1
-                    },
-                    {
-                        frequency: {
                             interval_unit: "MONTH",
                             interval_count: 1
                         },
                         tenure_type: "REGULAR",
-                        sequence: 2,
+                        sequence: 1,
                         pricing_scheme: {
                             fixed_price: {
                                 value: article.price,
@@ -77,7 +75,8 @@ class Article {
                 taxes: {
                     percentage: "20",
                     inclusive: false
-                }
+                },
+                quantity_supported: true
             });
 
             article.paypalPlanId = plan.id;
@@ -85,21 +84,31 @@ class Article {
         }
 
         const firstSub = !await Subscription.hasSubscriber(subscriber._id);
+        const freeTrial = article.freeTrial && firstSub;
 
         const subscription = await paypal.authenticatedRequest("POST", "/billing/subscriptions", {
             plan_id: article.paypalPlanId,
-            plan: firstSub ? undefined : {
+            plan: {
                 billing_cycles: [
+                    ...(freeTrial ? [{
+                        frequency: {
+                            interval_unit: "WEEk",
+                            interval_count: 1
+                        },
+                        tenure_type: "TRIAL",
+                        sequence: 1,
+                        total_cycles: 1
+                    }] : []),
                     {
                         frequency: {
                             interval_unit: "MONTH",
                             interval_count: 1
                         },
                         tenure_type: "REGULAR",
-                        sequence: 1,
+                        sequence: freeTrial ? 2 : 1,
                         pricing_scheme: {
                             fixed_price: {
-                                value: article.price,
+                                value: article.price + modules.reduce((a, b) => a + b.price, 0),
                                 currency_code: "EUR"
                             }
                         },
@@ -110,7 +119,7 @@ class Article {
             application_context: {
                 brand_name: "ChatBlast",
                 cancel_url: `${process.env.API_HOST}/payment/cancel`,
-                return_url: `${process.env.API_HOST}/payment/return`, // TODO: plus de collection invoice (sauvegardées dans paypal ? mais garder gen pdf), enregistrer les souscriptions (juste id), plusieurs souscriptions: revise quantité
+                return_url: `${process.env.API_HOST}/payment/return`,
                 user_action: "SUBSCRIBE_NOW"
             },
             subscriber: {
@@ -120,7 +129,8 @@ class Article {
                     surname: subscriber.name.lastname
                 },
                 payer_id: subscriber._id
-            }
+            },
+            quantity: (additionalSites + 1).toString()
         });
 
         return subscription;
