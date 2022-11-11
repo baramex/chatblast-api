@@ -25,9 +25,6 @@ router.get("/integration/:id", async (req, res) => {
 // récupérer intégration
 router.get("/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
-
         const intid = req.params.intid;
         const integration = await Integration.getById(intid);
         if (!integration) throw new Error("Intégration introuvable.");
@@ -48,9 +45,6 @@ router.patch("/integration/:intid", rateLimit({
     legacyHeaders: false
 }), Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
-
         const intid = req.params.intid;
         const integration = await Integration.getById(intid);
         if (!integration) throw new Error("Intégration introuvable.");
@@ -66,8 +60,8 @@ router.patch("/integration/:intid", rateLimit({
             integration.type = req.body.type;
         }
         if (typeof req.body.options == "object") {
-            if (typeof req.body.options.domain == "string") {
-                integration.options.domain = req.body.options.domain;
+            if (typeof req.body.options.domain?.value == "string") {
+                integration.options.domain.value = req.body.options.domain.value;
             }
             if (typeof req.body.options.verifyAuthToken == "object") {
                 if (typeof req.body.options.verifyAuthToken.route == "string") {
@@ -88,7 +82,14 @@ router.patch("/integration/:intid", rateLimit({
         }
         await integration.save({ validateBeforeSave: true });
 
-        res.status(200).json(integration);
+        res.status(200).json(await integration.populate({
+            path: "subscription",
+            select: "plan",
+            populate: {
+                path: "plan",
+                select: "name"
+            }
+        }));
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");

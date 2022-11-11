@@ -70,7 +70,6 @@ profileSchema.path("email.address").validate(async function (v) {
 profileSchema.post("validate", function (doc, next) {
     if (this.isModified("email.address") && this.email) {
         this.email.isVerified = false;
-        this.email.verificationCode = undefined;
     }
     next();
 });

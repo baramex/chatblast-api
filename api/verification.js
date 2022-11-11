@@ -1,8 +1,10 @@
+const axios = require('axios');
 const { default: rateLimit } = require('express-rate-limit');
-const { getTestMessageUrl } = require('nodemailer');
+const { ObjectId } = require('mongodb');
+const { Integration } = require('../models/integration.model');
 const { Middleware } = require('../models/session.model');
 const { Verification, VERIFICATIONS_TYPE } = require('../models/verification.model');
-const { mail, header, footer } = require('../server');
+const { mail, header, footer, CustomError } = require('../server');
 
 const router = require('express').Router();
 
@@ -56,6 +58,38 @@ router.post("/verification/email/code", rateLimit({
         await req.profile.save();
 
         await Verification.delete(code);
+
+        res.sendStatus(200);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Une erreur est survenue.");
+    }
+});
+
+router.post("/verification/integration/:id/domain", rateLimit({
+    windowMs: 1000 * 30,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false
+}), Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const integrationId = req.params.id;
+        if (!ObjectId.isValid(integrationId)) throw new Error("Requête invalide.");
+
+        const integration = await Integration.getById(integrationId);
+        if (!integration) throw new Error("Intégration introuvable.");
+
+        if (!integration.owner.equals(req.profile._id)) throw new CustomError("Non autorisé.", 403);
+        if (integration.options.domain.isVerified) throw new Error("Domaine déjà vérifié.");
+
+        const domain = integration.options.domain.value;
+
+        const dns = await axios.get("https://api.api-ninjas.com/v1/dnslookup", { params: { domain }, headers: { "X-Api-Key": process.env.NINJAS_API_KEY } }).catch(() => { throw new Error("Une erreur est survenue.") });
+        const isVerified = dns.data.some(a => a.record_type == "TXT" && a.value == "chatblast-checkowner=" + integration._id);
+        if (!isVerified) throw new Error("Entrée non trouvée sur le domaine.");
+
+        integration.options.domain.isVerified = true;
+        await integration.save();
 
         res.sendStatus(200);
     } catch (error) {

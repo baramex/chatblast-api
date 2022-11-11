@@ -18,10 +18,15 @@ const INTEGRATIONS_TYPE = {
 const integrationSchema = new Schema({
     subscription: { type: Types.ObjectId, ref: "Subscription", required: true },
     owner: { type: Types.ObjectId, ref: "Profile", required: true },
-    name: { type: String, validate: /^[a-z-0-9]{1,32}$/, default: () => "apps-" + String(Math.floor((Math.random() * 1000))).padStart(3, "0"), required: true },
+    name: { type: String, validate: /^[a-z-0-9]{2,32}$/, default: () => "apps-" + String(Math.floor((Math.random() * 1000))).padStart(3, "0"), required: true },
     options: {
         type: {
-            domain: { type: String, maxlength: 128, validate: /^https?:\/\/(?!\.)(\.?(?!-)([a-z]|-|[0-9])*(?<!(-|\.)))+\.([a-z]){2,24}$/, required: true },
+            domain: {
+                type: {
+                    value: { type: String, maxlength: 128, validate: /^([a-z0-9][a-z0-9-]{1,61}[a-z0-9]\.)+[a-z]{2,24}(:[0-9]{2,5})?$/, required: true },
+                    isVerified: { type: Boolean, default: false, required: true },
+                }, required: true
+            },
             verifyAuthToken: {
                 type: {
                     route: { type: String, maxlength: 128, validate: /^https?:\/\/(?!\.)(\.?(?!-)([a-z]|-|[0-9])*(?<!(-|\.)))+\.([a-z]){2,24}(\/[a-z0-9-!"$'()*+,:;<=>@\[\\\]^_`{\|}~\.]*)*$/, required: true },
@@ -39,6 +44,7 @@ const integrationSchema = new Schema({
             },
             _id: false
         },
+        required: true
     },
     state: { type: Number, min: 0, max: Object.values(INTEGRATION_STATES_TYPE).length - 1, default: INTEGRATION_STATES_TYPE.INACTIVE, required: true },
     type: { type: Number, min: 0, max: Object.values(INTEGRATIONS_TYPE).length - 1, required: true },
@@ -46,7 +52,7 @@ const integrationSchema = new Schema({
 });
 
 integrationSchema.path("name").validate(async function (v) {
-    return !await IntegrationModel.exists({ owner: this.owner, name: v });
+    return !await IntegrationModel.exists({ owner: this.owner, name: v, _id: { $ne: this._id } });
 });
 
 integrationSchema.path("options.verifyAuthToken").validate(function (v) {
@@ -55,7 +61,14 @@ integrationSchema.path("options.verifyAuthToken").validate(function (v) {
 
 integrationSchema.path("options.verifyAuthToken.route").validate(function (v) {
     const url = new URL(v);
-    return url.protocol + "//" + url.hostname.split(".").reverse().splice(0, 2).reverse().join(".") === this.parent().domain.replace("www.", "");
+    return url.hostname.split(".").reverse().splice(0, 2).reverse().join(".") === this.parent().domain.replace("www.", "");
+});
+
+integrationSchema.post("validate", function (doc, next) {
+    if (this.isModified("options.domain.value") && this.options.domain.value) {
+        this.options.domain.isVerified = false;
+    }
+    next();
 });
 
 const IntegrationModel = model("Integration", integrationSchema, "integrations");
