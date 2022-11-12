@@ -83,9 +83,9 @@ router.post("/verification/integration/:id/domain", rateLimit({
         if (integration.options.domain.isVerified) throw new Error("Domaine déjà vérifié.");
 
         const domain = integration.options.domain.value;
-
         const dns = await axios.get("https://api.api-ninjas.com/v1/dnslookup", { params: { domain }, headers: { "X-Api-Key": process.env.NINJAS_API_KEY } }).catch(() => { throw new Error("Une erreur est survenue.") });
-        const isVerified = dns.data.some(a => a.record_type == "TXT" && a.value == "chatblast-checkowner=" + integration._id);
+
+        const isVerified = dns.data.some(a => a.record_type == "TXT" && a.value == "chatblast-checkowner=" + new Array(domain.length).fill(0).map((a, i) => domain.charCodeAt(i)).reduce((a, b) => a + b, 0) + integration._id);
         if (!isVerified) throw new Error("Entrée non trouvée sur le domaine.");
 
         integration.options.domain.isVerified = true;
