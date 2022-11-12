@@ -39,7 +39,7 @@ const profileSchema = new Schema({
     email: {
         type: {
             isVerified: { type: Boolean, default: false },
-            address: { type: String, trim: true, lowercase: true, required: true, validate: isEmail },
+            address: { type: String, trim: true, lowercase: true, required: true, validate: { validator: isEmail, message: "L'adresse email est invalide." } },
             _id: false
         }
     },
