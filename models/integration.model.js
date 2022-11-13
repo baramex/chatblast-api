@@ -95,6 +95,21 @@ class Integration {
     static getByOwner(ownerId) {
         return IntegrationModel.find({ owner: ownerId });
     }
+
+
+    static populate(doc) {
+        return doc.populate({
+            path: "subscription",
+            select: "plan",
+            populate: [{
+                path: "plan",
+                select: "name"
+            },
+            {
+                path: "modules",
+            }]
+        });
+    }
 }
 
 module.exports = { Integration, INTEGRATIONS_TYPE, TOKEN_PLACES_TYPE };

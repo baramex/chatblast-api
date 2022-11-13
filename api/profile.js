@@ -149,7 +149,7 @@ router.get("/profile/:id/invoices", Middleware.requiresValidAuthExpress, async (
         if (id != "@me") throw new Error("Requête invalide.");
 
         const profile = req.profile;
-        res.status(200).json(await Invoice.getByProfile(profile._id));
+        res.status(200).json(await Invoice.getByProfile(profile._id).populate("articles.article", "price"));
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");
@@ -163,14 +163,7 @@ router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, asy
         if (id != "@me") throw new Error("Requête invalide.");
 
         const profile = req.profile;
-        const integrations = await Integration.getByOwner(profile._id).populate({
-            path: "subscription",
-            select: "plan",
-            populate: {
-                path: "plan",
-                select: "name"
-            }
-        });
+        const integrations = await Integration.populate(Integration.getByOwner(profile._id));
 
         res.status(200).json(integrations);
     } catch (error) {
@@ -185,7 +178,7 @@ router.get("/profile/:id/subscriptions", Middleware.requiresValidAuthExpress, as
         if (id != "@me") throw new Error("Requête invalide.");
 
         const profile = req.profile;
-        const subscriptions = await Subscription.getBySubscriber(profile._id).populate("plan", "name price quantity");
+        const subscriptions = await Subscription.getBySubscriber(profile._id).populate("plan", "name price quantity").populate("modules");
 
         res.status(200).json(subscriptions);
     } catch (error) {

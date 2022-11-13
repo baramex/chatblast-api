@@ -82,14 +82,7 @@ router.patch("/integration/:intid", rateLimit({
         }
         await integration.save({ validateBeforeSave: true });
 
-        res.status(200).json(await integration.populate({
-            path: "subscription",
-            select: "plan",
-            populate: {
-                path: "plan",
-                select: "name"
-            }
-        }));
+        res.status(200).json(await Integration.populate(integration));
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");

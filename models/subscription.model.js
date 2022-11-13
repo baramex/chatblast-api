@@ -15,7 +15,7 @@ const subscriptionSchema = new Schema({
     autorenew: { type: Boolean, default: true, required: true },
     expires: { type: Date, required: true },
     additionalSites: { type: Number, min: 0, default: 0, required: true },
-    modules: { type: ObjectId, ref: "Module", default: [], required: true },
+    modules: { type: [ObjectId], ref: "Module", default: [], required: true },
     date: { type: Date, default: Date.now, required: true }
 });
 

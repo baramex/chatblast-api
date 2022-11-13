@@ -35,9 +35,6 @@ router.post("/subscribe", rateLimit({
 // facture pdf
 router.get("/invoice/:invoiceid/pdf", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
-        const id = req.params.id;
-        if (id != "@me") throw new Error("Requête invalide.");
-
         const invoice = await Invoice.getById(req.params.invoiceid).populate("profile", "name").populate("articles.article", "name price");
         if (!invoice) throw new Error("Facture introuvable.");
         if (invoice.profile._id != req.profile._id && !Profile.hasPermission(req.profile, USER_PERMISSIONS.VIEW_USER_INVOICES)) throw new CustomError("Non autorisé.", 403);
