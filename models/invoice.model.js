@@ -80,8 +80,8 @@ class Invoice {
         table(doc, 50, 195, doc.page.width - 100, ["Nom", "Quantité", "Prix unitaire", "Remise", "Prix total HT"], invoice.articles.map(article => [article.article.name, article.quantity, article.article.price.toFixed(2) + " " + invoice.currency, (article.discount / 100 * -article.article.price * article.quantity).toFixed(2) + " " + invoice.currency, (article.quantity * article.article.price * (1 - article.discount / 100)).toFixed(2) + " " + invoice.currency]), ["", "", "", "Sous total", totalHT.toFixed(2) + " " + invoice.currency]);
 
         table(doc, 50, 195 + 30 * (invoice.articles.length + 2) + 20, doc.page.width - 100, ["Total HT", "TVA (" + invoice.vat + "%)", "Total TTC"], [[totalHT, VAT, totalTTC].map(value => value.toFixed(2) + " " + invoice.currency)]);
-        
-        doc.info.Title = "ChatBlast_Facture_" + invoice._id.toString() + ".pdf";
+
+        doc.info.Title = `ChatBlast-facture-${invoice._id.toString()}.pdf`;
         doc.end();
         return doc;
     }
