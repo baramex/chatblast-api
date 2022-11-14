@@ -12,28 +12,13 @@ router.get("/integration/:id", async (req, res) => {
         const id = req.params.id;
         if (!ObjectId.isValid(id)) throw new Error("Requête invalide.");
 
-        const integration = await Integration.getById(new ObjectId(id));
+        const integration = await Integration.getById(id);
         if (!integration) throw new Error("Intégration introuvable.");
 
         res.json({ id: integration._id, state: integration.state, type: integration.type, cookieName: integration.options.cookieName });
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");
-    }
-});
-
-// récupérer intégration
-router.get("/integration/:intid", Middleware.requiresValidAuthExpress, async (req, res) => {
-    try {
-        const intid = req.params.intid;
-        const integration = await Integration.getById(intid);
-        if (!integration) throw new Error("Intégration introuvable.");
-        if (integration.owner != req.profile._id && !Profile.hasPermission(req.profile, USER_PERMISSIONS.VIEW_USER_INTEGRATIONS)) throw new CustomError("Non autorisé.", 403);
-
-        res.status(200).json(integration);
-    } catch (error) {
-        console.error(error);
-        res.status(error.status || 400).send(error.message || "Une erreur est survenue.");
     }
 });
 
@@ -46,6 +31,7 @@ router.patch("/integration/:intid", rateLimit({
 }), Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const intid = req.params.intid;
+        if (!ObjectId.isValid(intid)) throw new Error("Requête invalide.");
         const integration = await Integration.getById(intid);
         if (!integration) throw new Error("Intégration introuvable.");
         if (integration.owner != req.profile._id && !Profile.hasPermission(req.profile, USER_PERMISSIONS.EDIT_USER_INTEGRATIONS)) throw new CustomError("Non autorisé.", 403);

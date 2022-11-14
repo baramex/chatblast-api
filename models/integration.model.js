@@ -84,7 +84,7 @@ class Integration {
      * @returns 
      */
     static getById(id) {
-        return IntegrationModel.findById(id).where("state", INTEGRATION_STATES_TYPE.ACTIVE);
+        return IntegrationModel.findById(id);
     }
 
     /**
@@ -103,7 +103,7 @@ class Integration {
             select: "plan",
             populate: [{
                 path: "plan",
-                select: "name"
+                select: "name details"
             },
             {
                 path: "modules",
@@ -112,4 +112,4 @@ class Integration {
     }
 }
 
-module.exports = { Integration, INTEGRATIONS_TYPE, TOKEN_PLACES_TYPE };
+module.exports = { Integration, INTEGRATIONS_TYPE, INTEGRATION_STATES_TYPE, TOKEN_PLACES_TYPE };

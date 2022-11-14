@@ -1,7 +1,7 @@
 const { Schema, model, default: mongoose } = require("mongoose");
 const token = require("random-web-token");
 const { io } = require("../server");
-const { Integration, INTEGRATIONS_TYPE } = require("./integration.model");
+const { Integration, INTEGRATIONS_TYPE, INTEGRATION_STATES_TYPE } = require("./integration.model");
 const { Profile, USERS_TYPE } = require("./profile.model");
 const { ObjectId } = mongoose.Types;
 
@@ -166,7 +166,8 @@ class Middleware {
     static async parseIntegration(referer) {
         const id = referer?.includes(process.env.HOST + "/integrations/") ? referer?.split("/").pop() : undefined;
         if (!ObjectId.isValid(id)) return;
-        const integration = await Integration.getById(new ObjectId(id));
+        const integration = await Integration.getById(id);
+        if (integration.state != INTEGRATION_STATES_TYPE.ACTIVE) return;
         return integration;
     }
 
