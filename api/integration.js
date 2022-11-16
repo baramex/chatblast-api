@@ -49,19 +49,19 @@ router.patch("/integration/:intid", rateLimit({
             if (typeof req.body.options.domain?.value == "string") {
                 integration.options.domain.value = req.body.options.domain.value;
             }
-            if (typeof req.body.options.verifyAuthToken == "object") {
-                if (typeof req.body.options.verifyAuthToken.route == "string") {
-                    integration.options.verifyAuthToken.route = req.body.options.verifyAuthToken.route;
+            if (typeof req.body.options.customAuth == "object") {
+                if (typeof req.body.options.customAuth.route == "string") {
+                    integration.options.customAuth.route = req.body.options.customAuth.route;
                 }
-                if (typeof req.body.options.verifyAuthToken.apiKey == "string") {
-                    integration.options.verifyAuthToken.apiKey = req.body.options.verifyAuthToken.apiKey;
+                if (typeof req.body.options.customAuth.apiKey == "string") {
+                    integration.options.customAuth.apiKey = req.body.options.customAuth.apiKey;
                 }
-                if (typeof req.body.options.verifyAuthToken.token == "object") {
-                    if (typeof req.body.options.verifyAuthToken.token.place == "number") {
-                        integration.options.verifyAuthToken.token.place = req.body.options.verifyAuthToken.token.place;
+                if (typeof req.body.options.customAuth.token == "object") {
+                    if (typeof req.body.options.customAuth.token.place == "number") {
+                        integration.options.customAuth.token.place = req.body.options.customAuth.token.place;
                     }
-                    if (typeof req.body.options.verifyAuthToken.token.key == "string") {
-                        integration.options.verifyAuthToken.token.key = req.body.options.verifyAuthToken.token.key;
+                    if (typeof req.body.options.customAuth.token.key == "string") {
+                        integration.options.customAuth.token.key = req.body.options.customAuth.token.key;
                     }
                 }
             }

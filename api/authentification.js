@@ -27,13 +27,12 @@ router.post("/integration/:int_id/profile/oauth", rateLimit({
             if (!token) throw new Error("Requête invalide.");
 
             let config = {};
-            switch (req.integration.options.verifyAuthToken.token.place) {
-                case TOKEN_PLACES_TYPE.AUTHORIZATION: config = { headers: { authorization: req.integration.options.verifyAuthToken.token.key + " " + token } }; break;
-                case TOKEN_PLACES_TYPE.QUERY: config = { params: { [req.integration.options.verifyAuthToken.token.key]: token } }; break;
-                case TOKEN_PLACES_TYPE.URLENCODED: config = { data: qs.stringify({ [req.integration.options.verifyAuthToken.token.key]: token }), headers: { 'content-type': 'application/x-www-form-urlencoded' } }; break;
+            switch (req.integration.options.customAuth.token.place) {
+                case TOKEN_PLACES_TYPE.AUTHORIZATION: config = { headers: { authorization: req.integration.options.customAuth.token.key + " " + token } }; break;
+                case TOKEN_PLACES_TYPE.QUERY: config = { params: { [req.integration.options.customAuth.token.key]: token } }; break;
             }
 
-            let result = (await axios.get(req.integration.options.verifyAuthToken.route, config).catch(() => { throw new Error("Erreur de vérification du token.") })).data;
+            let result = (await axios.get(req.integration.options.customAuth.route, config).catch(() => { throw new Error("Erreur de vérification du token.") })).data;
             if (!result || !result.username || !result.id || typeof result.username != "string" || typeof result.id != "string" || typeof result.avatar != "string") throw new Error("Erreur de vérification du token.");
 
             // get/update or create user

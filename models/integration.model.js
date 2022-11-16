@@ -2,8 +2,7 @@ const { Schema, model, Types } = require("mongoose");
 
 const TOKEN_PLACES_TYPE = {
     AUTHORIZATION: 0,
-    URLENCODED: 1,
-    QUERY: 2,
+    QUERY: 1,
 };
 const INTEGRATION_STATES_TYPE = {
     INACTIVE: 0,
@@ -27,10 +26,10 @@ const integrationSchema = new Schema({
                     isVerified: { type: Boolean, default: false, required: true },
                 }, required: true
             },
-            verifyAuthToken: {
+            customAuth: {
                 type: {
-                    route: { type: String, maxlength: 128, validate: /^https?:\/\/(?!\.)(\.?(?!-)([a-z]|-|[0-9])*(?<!(-|\.)))+\.([a-z]){2,24}(\/[a-z0-9-!"$'()*+,:;<=>@\[\\\]^_`{\|}~\.]*)*$/, required: true },
-                    apiKey: String,
+                    route: { type: String, maxlength: 128, validate: /^https:\/\/(?!\.)(\.?(?!-)([a-z]|-|[0-9])*(?<!(-|\.)))+\.([a-z]){2,24}(\/[a-z0-9-!"$'()*+,:;<=>@\[\\\]^_`{\|}~\.]*)*$/, required: true },
+                    apiKey: { type: String, maxlength: 128 },
                     token: {
                         type: {
                             place: { type: Number, min: 0, max: Object.values(TOKEN_PLACES_TYPE).length - 1, required: true },
@@ -55,11 +54,11 @@ integrationSchema.path("name").validate(async function (v) {
     return !await IntegrationModel.exists({ owner: this.owner, name: v, _id: { $ne: this._id } });
 });
 
-integrationSchema.path("options.verifyAuthToken").validate(function (v) {
-    return this.type === "custom-auth" ? !!v : true;
+integrationSchema.path("options.customAuth").validate(function (v) {
+    return this.type === INTEGRATIONS_TYPE.CUSTOM_AUTH ? !!v : true;
 });
 
-integrationSchema.path("options.verifyAuthToken.route").validate(function (v) {
+integrationSchema.path("options.customAuth.route").validate(function (v) {
     const url = new URL(v);
     return url.hostname.split(".").reverse().splice(0, 2).reverse().join(".") === this.parent().domain.replace("www.", "");
 });
