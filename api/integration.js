@@ -50,6 +50,7 @@ router.patch("/integration/:intid", rateLimit({
                 integration.options.domain.value = req.body.options.domain.value;
             }
             if (typeof req.body.options.customAuth == "object") {
+                if (!integration.options.customAuth) integration.options.customAuth = {};
                 if (typeof req.body.options.customAuth.route == "string") {
                     integration.options.customAuth.route = req.body.options.customAuth.route;
                 }
@@ -57,6 +58,7 @@ router.patch("/integration/:intid", rateLimit({
                     integration.options.customAuth.apiKey = req.body.options.customAuth.apiKey;
                 }
                 if (typeof req.body.options.customAuth.token == "object") {
+                    if (!integration.options.customAuth.token) integration.options.customAuth.token = {};
                     if (typeof req.body.options.customAuth.token.place == "number") {
                         integration.options.customAuth.token.place = req.body.options.customAuth.token.place;
                     }
@@ -71,7 +73,7 @@ router.patch("/integration/:intid", rateLimit({
         res.status(200).json(await Integration.populate(integration));
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || "Une erreur est survenue.");
+        res.status(400).send(error.errors ? Object.values(error.errors)[0].message : (error.message || "Une erreur est survenue."));
     }
 });
 

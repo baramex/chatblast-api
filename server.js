@@ -97,8 +97,8 @@ class CustomError extends Error {
 }
 const { Paypal } = require("./modules/Paypal");
 const paypal = new Paypal(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
-paypal.connect().then(() => {
+/*paypal.connect().then(() => {
     paypal.initWebhooks().catch(console.error);
-}).catch(console.error);
+}).catch(console.error);*/
 
 module.exports = { server, app, upload, io, header, footer, mail, CustomError, paypal };

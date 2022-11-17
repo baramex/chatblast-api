@@ -10,8 +10,8 @@ const INTEGRATION_STATES_TYPE = {
     ERRORED: 2,
 };
 const INTEGRATIONS_TYPE = {
-    CUSTOM_AUTH: 0,
-    ANONYMOUS_AUTH: 1,
+    ANONYMOUS_AUTH: 0,
+    CUSTOM_AUTH: 1
 };
 
 const integrationSchema = new Schema({
@@ -54,13 +54,20 @@ integrationSchema.path("name").validate(async function (v) {
     return !await IntegrationModel.exists({ owner: this.owner, name: v, _id: { $ne: this._id } });
 });
 
-integrationSchema.path("options.customAuth").validate(function (v) {
-    return this.type === INTEGRATIONS_TYPE.CUSTOM_AUTH ? !!v : true;
+integrationSchema.path("type").validate(function (v) {
+    if (v === INTEGRATIONS_TYPE.CUSTOM_AUTH && !this.options.customAuth) {
+        throw new Error("Vous devez fournir les informations nécessaires pour l'authentification personnalisée.");
+    }
+    else return true;
 });
 
 integrationSchema.path("options.customAuth.route").validate(function (v) {
     const url = new URL(v);
-    return url.hostname.split(".").reverse().splice(0, 2).reverse().join(".") === this.parent().domain.replace("www.", "");
+    if (this.parent().parent().type != INTEGRATIONS_TYPE.CUSTOM_AUTH) return true;
+    const domain = this.parent().domain.value.replace("www.", "");
+    const routeDomain = url.hostname.split(".").reverse().splice(0, 2).reverse().join(".");
+    if (routeDomain !== domain) throw new Error("Le domaine de la route API (" + routeDomain + ") n'est pas le même que celui de l'application (" + domain + ").");
+    return true;
 });
 
 integrationSchema.post("validate", function (doc, next) {
