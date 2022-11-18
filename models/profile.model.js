@@ -24,6 +24,7 @@ const USERNAMES_NOT_ALLOWED = ["system"];
 const FIELD_REGEX = /^[a-z0-9]{2,32}$/;
 const NAME_REGEX = /^[A-ZÀ-ÿ][a-zà-ÿ]{1,31}$/;
 const LASTNAME_REGEX = /^[A-Zà-ÿ]{2,32}$/;
+const REFERRAL_CODE_REGEX = /^[a-z0-9]{12}$/;
 const AVATAR_MIME_TYPE = ["image/png", "image/jpeg", "image/jpg"];
 const AVATAR_TYPE = [".png", ".jpeg", ".jpg"];
 
@@ -43,6 +44,7 @@ const profileSchema = new Schema({
             _id: false
         }
     },
+    referralCode: { type: String, trim: true, validate: REFERRAL_CODE_REGEX },
     username: { type: String, lowercase: true, trim: true, required: true, validate: FIELD_REGEX },
     password: { type: String, trim: true },
     permissions: { type: [{ type: Number, min: 0, max: Object.values(USER_PERMISSIONS).length - 1 }], default: [], required: true },
@@ -77,10 +79,10 @@ profileSchema.post("validate", function (doc, next) {
 const profileModel = model("Profile", profileSchema, "profiles");
 
 class Profile {
-    static create(username, password, id, integrationId, type, email, firstname, lastname) {
+    static create(username, password, id, integrationId, type, email, firstname, lastname, referralCode) {
         return new Promise(async (res, rej) => {
             new profileModel({
-                username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, integrations: integrationId ? [integrationId] : undefined, type, ...(email ? { email: { address: email } } : {}), ...((firstname && lastname) ? { name: { firstname, lastname } } : {})
+                username, password: password ? await bcrypt.hash(password, 10) : undefined, userId: id, integrationId, referralCode, integrations: integrationId ? [integrationId] : undefined, type, ...(email ? { email: { address: email } } : {}), ...((firstname && lastname) ? { name: { firstname, lastname } } : {})
             }).save().then(res).catch((error) => {
                 if (error.errors) {
                     return rej(new Error(Object.values(error.errors)[0].message));
@@ -154,6 +156,7 @@ class Profile {
             username: profile.username,
             email: isMe ? profile.email : undefined,
             name: isMe ? profile.name : undefined,
+            referralCode: isMe ? profile.referralCode : undefined,
             permissions: profile.permissions,
             type: profile.type,
             date: profile.date

@@ -107,13 +107,14 @@ router.post("/profile", rateLimit({
         if (req.isAuthed) throw new Error("Vous êtes déjà authentifié.");
         if (!req.body || !req.body.username || !req.body.password || typeof req.body.username != "string" || typeof req.body.password != "string" || (req.body.email ? typeof req.body.email != "string" : false) || (req.body.firstname ? typeof req.body.firstname != "string" : false) || (req.body.lastname ? typeof req.body.lastname != "string" : false)) throw new Error("Requête invalide.");
 
-        let { username, password, email, firstname, lastname } = req.body;
+        let { username, password, email, firstname, lastname, referralCode } = req.body;
         username = username.toLowerCase().trim();
         password = password.trim();
 
         if (!/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(password) || !FIELD_REGEX.test(username) || !isEmail(email) || !NAME_REGEX.test(firstname) || !LASTNAME_REGEX.test(lastname)) throw new Error("Requête invalide.");
 
-        const profile = await Profile.create(username, password, undefined, undefined, USERS_TYPE.DEFAULT, email, firstname, lastname);
+        // TODO: check validity of referral code
+        const profile = await Profile.create(username, password, undefined, undefined, USERS_TYPE.DEFAULT, email, firstname, lastname, referralCode);
         const ip = getClientIp(req);
         const session = await Session.create(profile._id, req.fingerprint.hash, ip);
         const expires = new Date(24 * 60 * 60 * 1000 + new Date().getTime());
