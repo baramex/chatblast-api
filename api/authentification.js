@@ -7,6 +7,7 @@ const fs = require("fs");
 const { getClientIp } = require("request-ip");
 const { default: rateLimit } = require("express-rate-limit");
 const { default: isEmail } = require("validator/lib/isEmail");
+const { Affiliate } = require("../models/affiliate.model");
 
 const router = require("express").Router();
 
@@ -107,14 +108,14 @@ router.post("/profile", rateLimit({
         if (req.isAuthed) throw new Error("Vous êtes déjà authentifié.");
         if (!req.body || !req.body.username || !req.body.password || typeof req.body.username != "string" || typeof req.body.password != "string" || (req.body.email ? typeof req.body.email != "string" : false) || (req.body.firstname ? typeof req.body.firstname != "string" : false) || (req.body.lastname ? typeof req.body.lastname != "string" : false)) throw new Error("Requête invalide.");
 
-        let { username, password, email, firstname, lastname, referralCode } = req.body;
+        let { username, password, email, firstname, lastname, affiliateCode } = req.body;
         username = username.toLowerCase().trim();
         password = password.trim();
 
         if (!/^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,32}$)/.test(password) || !FIELD_REGEX.test(username) || !isEmail(email) || !NAME_REGEX.test(firstname) || !LASTNAME_REGEX.test(lastname)) throw new Error("Requête invalide.");
+        if (affiliateCode && !await Affiliate.exists(affiliateCode)) throw new Error("Code d'affiliation inexistant.");
 
-        // TODO: check validity of referral code
-        const profile = await Profile.create(username, password, undefined, undefined, USERS_TYPE.DEFAULT, email, firstname, lastname, referralCode);
+        const profile = await Profile.create(username, password, undefined, undefined, USERS_TYPE.DEFAULT, email, firstname, lastname, affiliateCode);
         const ip = getClientIp(req);
         const session = await Session.create(profile._id, req.fingerprint.hash, ip);
         const expires = new Date(24 * 60 * 60 * 1000 + new Date().getTime());

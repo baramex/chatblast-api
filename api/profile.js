@@ -11,6 +11,7 @@ const { Integration } = require('../models/integration.model');
 const { Magic, MAGIC_MIME_TYPE } = require('mmmagic');
 const { hash } = require('bcrypt');
 const Subscription = require('../models/subscription.model');
+const { Affiliate } = require('../models/affiliate.model');
 
 const router = require('express').Router();
 
@@ -172,15 +173,35 @@ router.get("/profile/:id/integrations", Middleware.requiresValidAuthExpress, asy
     }
 });
 
+// récupérer souscriptions
 router.get("/profile/:id/subscriptions", Middleware.requiresValidAuthExpress, async (req, res) => {
     try {
         const id = req.params.id;
         if (id != "@me") throw new Error("Requête invalide.");
 
         const profile = req.profile;
-        const subscriptions = await Subscription.getBySubscriber(profile._id).populate("plan", "name price quantity").populate("modules");
+        const subscriptions = await Subscription.getBySubscriber(profile._id).populate("plan", "name price").populate("modules");
 
         res.status(200).json(subscriptions);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Une erreur est survenue.");
+    }
+});
+
+// récupérer affiliation
+router.get("/profile/:id/affiliation", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const profile = req.profile;
+        const affiliation = await Affiliate.getByProfile(profile._id);
+        if (!affiliation) return res.status(200).json(null);
+
+        const users = await Affiliate.getUsers(affiliation._id);
+
+        res.status(200).json({ ...affiliation, users });
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");

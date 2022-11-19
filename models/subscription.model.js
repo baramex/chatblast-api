@@ -1,5 +1,6 @@
 const { ObjectId } = require("mongodb");
 const { Schema, model } = require("mongoose");
+const { REFERRAL_CODE_REGEX } = require("./profile.model");
 
 const SUBSCRIPTIONS_STATE = {
     UNACTIVE: 0,
@@ -14,9 +15,14 @@ const subscriptionSchema = new Schema({
     state: { type: Number, min: 0, max: Object.values(SUBSCRIPTIONS_STATE).length - 1, required: true },
     autorenew: { type: Boolean, default: true, required: true },
     expires: { type: Date, required: true },
+    affiliateCode: { type: String, validate: a => !a || REFERRAL_CODE_REGEX.test(a) },
     additionalSites: { type: Number, min: 0, default: 0, required: true },
     modules: { type: [ObjectId], ref: "Module", default: [], required: true },
     date: { type: Date, default: Date.now, required: true }
+});
+
+subscriptionSchema.virtual("price").get(function () {
+    return (this.plan.price + this.modules.map(m => m.price).reduce((a, b) => a + b, 0)) * (this.additionalSites + 1);
 });
 
 const SubscriptionModel = model("Subscription", subscriptionSchema, "subscriptions");
@@ -44,6 +50,10 @@ class Subscription {
             expires: doc.expires,
             date: doc.date
         }
+    }
+
+    static getByAffiliateCode(code) {
+        return SubscriptionModel.find({ affiliateCode: code });
     }
 }
 

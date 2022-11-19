@@ -4,3 +4,7 @@ const { app } = require("./server");
 mongoose.connect(process.env.DB, { dbName: process.env.DB_NAME });
 
 app.use(require("./api/authentification"), require("./api/profile"), require("./api/message"), require("./api/integration"), require("./api/communication"), require("./api/subscription"), require("./api/verification"), require("./api/misc"));
+
+app.use((req, res) => {
+    res.status(404).send("Route non trouvée.");
+});
