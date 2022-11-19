@@ -199,9 +199,55 @@ router.get("/profile/:id/affiliation", Middleware.requiresValidAuthExpress, asyn
         const affiliation = await Affiliate.getByProfile(profile._id);
         if (!affiliation) return res.status(200).json(null);
 
-        const users = await Affiliate.getUsers(affiliation._id);
+        res.status(200).json(affiliation);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error.message || "Une erreur est survenue.");
+    }
+});
 
-        res.status(200).json({ ...affiliation, users });
+router.post("/profile/:id/affiliation",
+    rateLimit({
+        windowMs: 1000 * 30,
+        max: 10,
+        standardHeaders: true,
+        legacyHeaders: false
+    }), Middleware.requiresValidAuthExpress, async (req, res) => {
+        try {
+            const id = req.params.id;
+            if (id != "@me") throw new Error("Requête invalide.");
+
+            let affiliation = await Affiliate.getByProfile(req.profile._id);
+            const { paypalEmail } = req.body;
+            if (typeof paypalEmail == "string") {
+                if (affiliation) {
+                    affiliation.paypalEmail = paypalEmail;
+                    await affiliation.save({ validateBeforeSave: true });
+                }
+                else {
+                    affiliation = await Affiliate.create(req.profile._id, paypalEmail);
+                }
+            }
+            if (!affiliation) throw new Error("Requête invalide.");
+
+            res.status(200).json(affiliation);
+        } catch (error) {
+            console.error(error);
+            res.status(400).send(error.message || "Une erreur est survenue.");
+        }
+    });
+
+router.get("/profile/:id/affiliation/users", Middleware.requiresValidAuthExpress, async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id != "@me") throw new Error("Requête invalide.");
+
+        const affiliation = await Affiliate.getByProfile(req.profile._id);
+        if (!affiliation) throw new Error("Affiliation inexistante.");
+
+        const users = (await Affiliate.getUsers(affiliation.code)).map(a => ({ _id: a._id, profile: a.profile, price: a.price, date: a.date }));
+
+        res.status(200).json(users);
     } catch (error) {
         console.error(error);
         res.status(400).send(error.message || "Une erreur est survenue.");

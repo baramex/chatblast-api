@@ -5,9 +5,9 @@ const { REFERRAL_CODE_REGEX } = require("./profile.model");
 const Subscription = require("./subscription.model");
 
 const affiliateSchema = new Schema({
-    profile: { type: Types.ObjectId, ref: "Profile", required: true },
+    profile: { type: Types.ObjectId, ref: "Profile", required: true, unique: true },
     code: { type: String, default: () => genSync("medium", 12), required: true, unique: true, validate: REFERRAL_CODE_REGEX },
-    paypalEmail: { type: String, validate: isEmail, required: true },
+    paypalEmail: { type: String, validate: { validator: isEmail, message: "L'adresse email est invalide." }, required: true },
     date: { type: Date, default: Date.now, required: true }
 });
 
@@ -31,7 +31,7 @@ class Affiliate {
     }
 
     static getUsers(code) {
-        return Subscription.getByAffiliateCode(code).populate("profile", "username").populate("plan", "price").populate("modules", "price").select("price profile.username");
+        return Subscription.getByAffiliateCode(code).populate("profile", "username").populate("plan", "price").populate("modules", "price").select("additionalSites date");
     }
 }
 
